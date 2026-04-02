@@ -1,0 +1,37 @@
+[Unit]
+Description=nouse Brain Loop — autonom kunskapsgraf
+Documentation=https://github.com/base76/nouse
+After=network-online.target ollama.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/home/bjorn/projects/nouse/.venv/bin/nouse daemon start
+WorkingDirectory=/home/bjorn/projects/nouse
+Restart=on-failure
+RestartSec=30s
+# Ge hjärnan tid att avsluta rent
+TimeoutStopSec=60s
+
+# Logga till journald
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=nouse-brain
+
+# Miljövariabler
+Environment=PYTHONUNBUFFERED=1
+Environment=HOME=/home/bjorn
+Environment=NOUSE_OLLAMA_MODEL=glm-4.7-flash:latest
+Environment=NOUSE_CHAT_MODEL=glm-4.7-flash:latest
+Environment=NOUSE_EXTRACT_MODEL=glm-4.7-flash:latest
+Environment=NOUSE_SYNTH_MODEL=glm-4.7-flash:latest
+Environment=NOUSE_MODEL_CANDIDATES_CHAT=glm-4.7-flash:latest,minimax-m2.7:cloud
+Environment=NOUSE_MODEL_CANDIDATES_EXTRACT=glm-4.7-flash:latest,minimax-m2.7:cloud
+Environment=NOUSE_MODEL_CANDIDATES_SYNTH=glm-4.7-flash:latest,minimax-m2.7:cloud
+Environment=NOUSE_LOOP_INTERVAL_SEC=120
+Environment=NOUSE_SOURCE_PROGRESS_TRACE=1
+Environment=NOUSE_SOURCE_PROGRESS_DOC_EVERY=3
+Environment=NOUSE_WATCH_EXTRA_PATHS=/media/bjorn/iic1/workspace/Base76_Research_Lab,/media/bjorn/iic/workspace/Base76_Research_Lab
+
+[Install]
+WantedBy=default.target

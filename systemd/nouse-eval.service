@@ -1,0 +1,15 @@
+[Unit]
+Description=nouse Nightly Eval (trace-probe + quality report)
+After=nouse-brain.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/bjorn/projects/nouse
+ExecStart=/home/bjorn/projects/nouse/.venv/bin/python /home/bjorn/projects/nouse/scripts/nouse_nightly_eval.py
+Environment=PYTHONUNBUFFERED=1
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=nouse-eval
+
+[Install]
+WantedBy=default.target

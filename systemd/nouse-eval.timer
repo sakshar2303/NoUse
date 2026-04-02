@@ -1,0 +1,10 @@
+[Unit]
+Description=nouse Nightly Eval timer
+
+[Timer]
+OnCalendar=*-*-* 02:20:00
+RandomizedDelaySec=10m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=nouse Watchdog timer (self-heal + maintenance)
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=3min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

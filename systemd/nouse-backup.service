@@ -1,0 +1,11 @@
+[Unit]
+Description=nouse KuzuDB Backup
+After=nouse-daemon.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'cp -r %h/.local/share/nouse/field.kuzu %h/.local/share/nouse/backups/field_$(date +%%Y%%m%%d_%%H%%M%%S).kuzu'
+WorkingDirectory=/home/bjorn
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,12 @@
+[Unit]
+Description=nouse Brain Loop — starta vid boot
+Requires=nouse-daemon.service
+
+[Timer]
+# Starta 2 min efter boot (låt Ollama hinna starta)
+OnBootSec=2min
+# Och se till att servicen körs (omstart om den dog)
+OnUnitInactiveSec=10min
+
+[Install]
+WantedBy=timers.target

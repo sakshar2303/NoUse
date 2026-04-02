@@ -1,0 +1,16 @@
+[Unit]
+Description=nouse Watchdog + autonom underhållstick
+After=nouse-brain.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/bjorn/projects/nouse
+ExecStart=/home/bjorn/projects/nouse/.venv/bin/python /home/bjorn/projects/nouse/scripts/nouse_watchdog.py
+Environment=PYTHONUNBUFFERED=1
+Environment=NOUSE_WATCHDOG_STARTUP_GRACE_SEC=900
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=nouse-watchdog
+
+[Install]
+WantedBy=default.target
