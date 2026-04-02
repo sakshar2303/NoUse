@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 
-JOURNAL_DIR = Path.home() / ".local" / "share" / "b76" / "journal"
+JOURNAL_DIR = Path.home() / ".local" / "share" / "nouse" / "journal"
 DEDUP_STATE_FILE = JOURNAL_DIR / ".trace_dedup_state.json"
 
 

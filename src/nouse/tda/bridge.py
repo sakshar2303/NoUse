@@ -9,8 +9,8 @@ Fabrikslogik:
   2. Fallback: Python-implementation (scipy, långsam men fungerar)
 
 Bygga Rust-modulen:
-  cd /home/bjorn/projects/b76/crates/tda_engine
-  maturin develop --release -m /home/bjorn/projects/b76/crates/tda_engine/Cargo.toml
+  cd /home/bjorn/projects/nouse/crates/tda_engine
+  maturin develop --release -m /home/bjorn/projects/nouse/crates/tda_engine/Cargo.toml
 
 Eller via install.sh (görs automatiskt).
 """

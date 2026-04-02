@@ -9,7 +9,7 @@ import asyncio
 from datetime import datetime
 from pathlib import Path
 
-SELF_DIR = Path.home() / ".local" / "share" / "b76" / "self"
+SELF_DIR = Path.home() / ".local" / "share" / "nouse" / "self"
 
 
 async def write_discovery(disc: dict) -> None:

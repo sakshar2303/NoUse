@@ -1,0 +1,1202 @@
+[
+  {
+    "id": "q001",
+    "domain": "filosofi",
+    "question": "Beskriv relationen mellan metafilosofi och självrefererande system.",
+    "question_type": "relation",
+    "expected_concepts": [
+      "metafilosofi",
+      "självrefererande system"
+    ],
+    "expected_relations": [
+      [
+        "metafilosofi",
+        "är_analogt_med",
+        "självrefererande system"
+      ]
+    ],
+    "why_hint": "Båda behandlar system som inkluderar sig själva i sin representation",
+    "strength": 1.5,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q002",
+    "domain": "datorvetenskap",
+    "question": "Vad är kopplingen mellan cognos-ai och MIT License?",
+    "question_type": "relation",
+    "expected_concepts": [
+      "cognos-ai",
+      "MIT License"
+    ],
+    "expected_relations": [
+      [
+        "cognos-ai",
+        "licensieras_under",
+        "MIT License"
+      ]
+    ],
+    "why_hint": "cognos-ai licensieras under MIT License",
+    "strength": 3.6,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q003",
+    "domain": "web framework",
+    "question": "Varför är en del av Next.js JSON5?",
+    "question_type": "mekanisk",
+    "expected_concepts": [
+      "Next.js",
+      "JSON5"
+    ],
+    "expected_relations": [
+      [
+        "Next.js",
+        "är_del_av",
+        "JSON5"
+      ]
+    ],
+    "why_hint": "Next.js uses JSON5 in its configuration.",
+    "strength": 3.75,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q004",
+    "domain": "neurovetenskap",
+    "question": "Vad innebär det att FNC Framework stärker Bisociation Engine?",
+    "question_type": "implikation",
+    "expected_concepts": [
+      "FNC Framework",
+      "Bisociation Engine"
+    ],
+    "expected_relations": [
+      [
+        "FNC Framework",
+        "stärker",
+        "Bisociation Engine"
+      ]
+    ],
+    "why_hint": "FNC Framework stödjer utvecklingen av Bisociation Engine",
+    "strength": 2.03,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q005",
+    "domain": "programmering",
+    "question": "Vad är httpx?",
+    "question_type": "vad_ar",
+    "expected_concepts": [
+      "httpx",
+      "HTTP-förfrågningar"
+    ],
+    "expected_relations": [
+      [
+        "httpx",
+        "producerar",
+        "HTTP-förfrågningar"
+      ]
+    ],
+    "why_hint": "HTTP-klientbibliotek för att hämta webbsidor",
+    "strength": 1.62,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q006",
+    "domain": "databasarkitektur",
+    "question": "Vad är kopplingen mellan KuzuDB och global Web-instans?",
+    "question_type": "relation",
+    "expected_concepts": [
+      "KuzuDB",
+      "global Web-instans"
+    ],
+    "expected_relations": [
+      [
+        "KuzuDB",
+        "modulerar",
+        "global Web-instans"
+      ]
+    ],
+    "why_hint": "KuzuDB refaktorteras för att fungera",
+    "strength": 1.83,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q007",
+    "domain": "verktyg",
+    "question": "Beskriv relationen mellan Babel och JSON5.",
+    "question_type": "relation",
+    "expected_concepts": [
+      "Babel",
+      "JSON5"
+    ],
+    "expected_relations": [
+      [
+        "Babel",
+        "är_del_av",
+        "JSON5"
+      ]
+    ],
+    "why_hint": "Babel supports JSON5 files.",
+    "strength": 3.15,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q008",
+    "domain": "etik",
+    "question": "Varför stärker ai-etik medvetande?",
+    "question_type": "mekanisk",
+    "expected_concepts": [
+      "ai-etik",
+      "medvetande"
+    ],
+    "expected_relations": [
+      [
+        "ai-etik",
+        "stärker",
+        "medvetande"
+      ]
+    ],
+    "why_hint": "Ai-etik stärker förståelsen av medvetande",
+    "strength": 2.5,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q009",
+    "domain": "matematik",
+    "question": "Vad innebär det att Matematik verifierar Träningsexempel?",
+    "question_type": "implikation",
+    "expected_concepts": [
+      "Matematik",
+      "Träningsexempel"
+    ],
+    "expected_relations": [
+      [
+        "Matematik",
+        "verifierar",
+        "Träningsexempel"
+      ]
+    ],
+    "why_hint": "Matematik måste verifiera träningsexempel oberoende",
+    "strength": 4.05,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q010",
+    "domain": "databasarkitektur",
+    "question": "Vad är KuzuDB och hur relaterar det till global Web-instans?",
+    "question_type": "vad_ar",
+    "expected_concepts": [
+      "KuzuDB",
+      "global Web-instans"
+    ],
+    "expected_relations": [
+      [
+        "KuzuDB",
+        "konsoliderar",
+        "global Web-instans"
+      ]
+    ],
+    "why_hint": "KuzuDB refaktorteras genom att sätta read_only=False",
+    "strength": 1.83,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q011",
+    "domain": "neurovetenskap",
+    "question": "På vilket sätt oscillerar med medvetande självrefererande system?",
+    "question_type": "relation",
+    "expected_concepts": [
+      "medvetande",
+      "självrefererande system"
+    ],
+    "expected_relations": [
+      [
+        "medvetande",
+        "oscillerar",
+        "självrefererande system"
+      ]
+    ],
+    "why_hint": "Medvetandet oscillerar med självrefererande system",
+    "strength": 2.65,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q012",
+    "domain": "filosofi",
+    "question": "Beskriv relationen mellan fenomenologi och maskinperception.",
+    "question_type": "relation",
+    "expected_concepts": [
+      "fenomenologi",
+      "maskinperception"
+    ],
+    "expected_relations": [
+      [
+        "fenomenologi",
+        "beskriver",
+        "maskinperception"
+      ]
+    ],
+    "why_hint": "Fenomenologi beskriver maskinperception",
+    "strength": 3.15,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q013",
+    "domain": "spec",
+    "question": "Hur fungerar kopplingen där JSON5 stärker npm package?",
+    "question_type": "mekanisk",
+    "expected_concepts": [
+      "JSON5",
+      "npm package"
+    ],
+    "expected_relations": [
+      [
+        "JSON5",
+        "stärker",
+        "npm package"
+      ]
+    ],
+    "why_hint": ">65M downloads/week and top 0.1% most depended-upon packages.",
+    "strength": 2.5,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q014",
+    "domain": "ai",
+    "question": "Vilka konsekvenser har det att självrefererande system påverkar metafilosofi?",
+    "question_type": "implikation",
+    "expected_concepts": [
+      "självrefererande system",
+      "metafilosofi"
+    ],
+    "expected_relations": [
+      [
+        "självrefererande system",
+        "är_del_av",
+        "metafilosofi"
+      ]
+    ],
+    "why_hint": "Självrefererande system är en del av metafilosofin",
+    "strength": 1.7,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q015",
+    "domain": "spec",
+    "question": "Vad är JSON5 och hur relaterar det till JSON?",
+    "question_type": "vad_ar",
+    "expected_concepts": [
+      "JSON5",
+      "JSON"
+    ],
+    "expected_relations": [
+      [
+        "JSON5",
+        "är_analogt_med",
+        "JSON"
+      ]
+    ],
+    "why_hint": "JSON5 extends JSON and adds new syntax.",
+    "strength": 17.95,
+    "difficulty": "easy"
+  },
+  {
+    "id": "q016",
+    "domain": "kunskapsteori",
+    "question": "Beskriv relationen mellan osäkerhet och CognOS.",
+    "question_type": "relation",
+    "expected_concepts": [
+      "osäkerhet",
+      "CognOS"
+    ],
+    "expected_relations": [
+      [
+        "osäkerhet",
+        "påverkar",
+        "CognOS"
+      ]
+    ],
+    "why_hint": "Osäkerhet påverkar CognOS genom att påverka beslutsprocessen",
+    "strength": 4.85,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q017",
+    "domain": "datavetenskap",
+    "question": "Beskriv relationen mellan Mistral och CognOS.",
+    "question_type": "relation",
+    "expected_concepts": [
+      "Mistral",
+      "CognOS"
+    ],
+    "expected_relations": [
+      [
+        "Mistral",
+        "stärker",
+        "CognOS"
+      ]
+    ],
+    "why_hint": "Mistral används för att fine-tuna CognOS för bättre prestanda",
+    "strength": 4.7,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q018",
+    "domain": "datorvetenskap",
+    "question": "Varför används av JSON CognOS?",
+    "question_type": "mekanisk",
+    "expected_concepts": [
+      "JSON",
+      "CognOS"
+    ],
+    "expected_relations": [
+      [
+        "JSON",
+        "används_av",
+        "CognOS"
+      ]
+    ],
+    "why_hint": "JSON används för att lagra resultat från CognOS-experimenten",
+    "strength": 16.4,
+    "difficulty": "easy"
+  },
+  {
+    "id": "q019",
+    "domain": "statistik",
+    "question": "Vilka konsekvenser har det att sannolikhetsgränser påverkar CognOS?",
+    "question_type": "implikation",
+    "expected_concepts": [
+      "sannolikhetsgränser",
+      "CognOS"
+    ],
+    "expected_relations": [
+      [
+        "sannolikhetsgränser",
+        "försvagas",
+        "CognOS"
+      ]
+    ],
+    "why_hint": "Sannolikhetsgränser har begränsningar, såsom att ignorerar epistemic och aleatoric osäkerhet",
+    "strength": 4.1,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q020",
+    "domain": "datavetenskap",
+    "question": "Vad är Mistral?",
+    "question_type": "vad_ar",
+    "expected_concepts": [
+      "Mistral",
+      "CognOS"
+    ],
+    "expected_relations": [
+      [
+        "Mistral",
+        "modulerar",
+        "CognOS"
+      ]
+    ],
+    "why_hint": "Mistral modulerar CognOS för att förbättra dess prestanda",
+    "strength": 4.45,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q021",
+    "domain": "vetenskap",
+    "question": "Hur relaterar forskning till philosophy_and_systems?",
+    "question_type": "relation",
+    "expected_concepts": [
+      "forskning",
+      "philosophy_and_systems"
+    ],
+    "expected_relations": [
+      [
+        "forskning",
+        "producerar",
+        "philosophy_and_systems"
+      ]
+    ],
+    "why_hint": "forskning producerar philosophy_and_systems",
+    "strength": 1.78,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q022",
+    "domain": "neurovetenskap",
+    "question": "Vad är kopplingen mellan medvetande och självrefererande system?",
+    "question_type": "relation",
+    "expected_concepts": [
+      "medvetande",
+      "självrefererande system"
+    ],
+    "expected_relations": [
+      [
+        "medvetande",
+        "är_analogt_med",
+        "självrefererande system"
+      ]
+    ],
+    "why_hint": "Båda har förmåga till självmodellering",
+    "strength": 2.65,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q023",
+    "domain": "teoretisk fysik",
+    "question": "Varför orsakar Bells teorem FNC?",
+    "question_type": "mekanisk",
+    "expected_concepts": [
+      "Bells teorem",
+      "FNC"
+    ],
+    "expected_relations": [
+      [
+        "Bells teorem",
+        "orsakar",
+        "FNC"
+      ]
+    ],
+    "why_hint": "Bells teorem inspirerar till utvecklingen av FNC",
+    "strength": 2.25,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q024",
+    "domain": "datorvetenskap",
+    "question": "Vad innebär det att Python reglerar OpenJarvis?",
+    "question_type": "implikation",
+    "expected_concepts": [
+      "Python",
+      "OpenJarvis"
+    ],
+    "expected_relations": [
+      [
+        "Python",
+        "reglerar",
+        "OpenJarvis"
+      ]
+    ],
+    "why_hint": "OpenJarvis requires Python 3.10+ for installation.",
+    "strength": 5.45,
+    "difficulty": "easy"
+  },
+  {
+    "id": "q025",
+    "domain": "kognition",
+    "question": "Förklara vad bisociation är i relation till kreativitet.",
+    "question_type": "vad_ar",
+    "expected_concepts": [
+      "bisociation",
+      "kreativitet"
+    ],
+    "expected_relations": [
+      [
+        "bisociation",
+        "är_del_av",
+        "kreativitet"
+      ]
+    ],
+    "why_hint": "Bisociation är en form av kreativitet som uppstår när två oberoende ramverk kolliderar",
+    "strength": 2.35,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q026",
+    "domain": "mjukvara",
+    "question": "På vilket sätt konsoliderar b76.client HTTP-klient?",
+    "question_type": "relation",
+    "expected_concepts": [
+      "b76.client",
+      "HTTP-klient"
+    ],
+    "expected_relations": [
+      [
+        "b76.client",
+        "konsoliderar",
+        "HTTP-klient"
+      ]
+    ],
+    "why_hint": "Modulen samlar tunn HTTP-klientfunktionalitet mot daemon-API",
+    "strength": 1.7,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q027",
+    "domain": "artificiell intelligens",
+    "question": "Beskriv relationen mellan CognOS och Python.",
+    "question_type": "relation",
+    "expected_concepts": [
+      "CognOS",
+      "Python"
+    ],
+    "expected_relations": [
+      [
+        "CognOS",
+        "använder",
+        "Python"
+      ]
+    ],
+    "why_hint": "CognOS är skrivet i Python",
+    "strength": 12.85,
+    "difficulty": "easy"
+  },
+  {
+    "id": "q028",
+    "domain": "datasystem",
+    "question": "Varför är analogt med NightRun hippocampal replay?",
+    "question_type": "mekanisk",
+    "expected_concepts": [
+      "NightRun",
+      "hippocampal replay"
+    ],
+    "expected_relations": [
+      [
+        "NightRun",
+        "är_analogt_med",
+        "hippocampal replay"
+      ]
+    ],
+    "why_hint": "NightRun fungerar på samma sätt",
+    "strength": 1.67,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q029",
+    "domain": "mjukvara",
+    "question": "Vilka konsekvenser har det att b76.client påverkar HTTP-klient?",
+    "question_type": "implikation",
+    "expected_concepts": [
+      "b76.client",
+      "HTTP-klient"
+    ],
+    "expected_relations": [
+      [
+        "b76.client",
+        "är_analogt_med",
+        "HTTP-klient"
+      ]
+    ],
+    "why_hint": "b76.client är en tunn HTTP-klient",
+    "strength": 1.7,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q030",
+    "domain": "sannolikhetslära",
+    "question": "Vad är epistemic osäkerhet och hur relaterar det till CognOS?",
+    "question_type": "vad_ar",
+    "expected_concepts": [
+      "epistemic osäkerhet",
+      "CognOS"
+    ],
+    "expected_relations": [
+      [
+        "epistemic osäkerhet",
+        "konsoliderar",
+        "CognOS"
+      ]
+    ],
+    "why_hint": "CognOS kombinerar epistemic och aleatoric osäkerhet för att identifiera högriskprediktioner",
+    "strength": 4.05,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q031",
+    "domain": "databasarkitektur",
+    "question": "Vad är kopplingen mellan KuzuDB och global Web-instans?",
+    "question_type": "relation",
+    "expected_concepts": [
+      "KuzuDB",
+      "global Web-instans"
+    ],
+    "expected_relations": [
+      [
+        "KuzuDB",
+        "beskriver",
+        "global Web-instans"
+      ]
+    ],
+    "why_hint": "KuzuDB refaktoreras för att bli en global webbaserad databasinstans",
+    "strength": 1.83,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q032",
+    "domain": "vetenskap",
+    "question": "Hur relaterar forskning till Base76 Research Lab?",
+    "question_type": "relation",
+    "expected_concepts": [
+      "forskning",
+      "Base76 Research Lab"
+    ],
+    "expected_relations": [
+      [
+        "forskning",
+        "är_del_av",
+        "Base76 Research Lab"
+      ]
+    ],
+    "why_hint": "Base76 Research Lab är en forskningsenhet",
+    "strength": 1.93,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q033",
+    "domain": "forskning",
+    "question": "Hur fungerar kopplingen där Forskningsreplication stärker CognOS?",
+    "question_type": "mekanisk",
+    "expected_concepts": [
+      "Forskningsreplication",
+      "CognOS"
+    ],
+    "expected_relations": [
+      [
+        "Forskningsreplication",
+        "stärker",
+        "CognOS"
+      ]
+    ],
+    "why_hint": "Forskningsreplication stärker CognOS-projektet",
+    "strength": 4.0,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q034",
+    "domain": "mjukvara",
+    "question": "Vilka konsekvenser har det att b76.client påverkar HTTP-klient?",
+    "question_type": "implikation",
+    "expected_concepts": [
+      "b76.client",
+      "HTTP-klient"
+    ],
+    "expected_relations": [
+      [
+        "b76.client",
+        "är_analogt_med",
+        "HTTP-klient"
+      ]
+    ],
+    "why_hint": "Modulen är en tunn HTTP-klient",
+    "strength": 1.7,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q035",
+    "domain": "operativsystem",
+    "question": "Förklara vad Apple platforms är i relation till JSON5.",
+    "question_type": "vad_ar",
+    "expected_concepts": [
+      "Apple platforms",
+      "JSON5"
+    ],
+    "expected_relations": [
+      [
+        "Apple platforms",
+        "stärker",
+        "JSON5"
+      ]
+    ],
+    "why_hint": "JSON5 is natively supported on macOS and iOS.",
+    "strength": 5.5,
+    "difficulty": "easy"
+  },
+  {
+    "id": "q036",
+    "domain": "mjukvaruarkitektur",
+    "question": "Hur relaterar brain-db-core till brain stem?",
+    "question_type": "relation",
+    "expected_concepts": [
+      "brain-db-core",
+      "brain stem"
+    ],
+    "expected_relations": [
+      [
+        "brain-db-core",
+        "är_analogt_med",
+        "brain stem"
+      ]
+    ],
+    "why_hint": "brain-db-core beskrivs",
+    "strength": 1.78,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q037",
+    "domain": "matematik",
+    "question": "Vad är kopplingen mellan topological data analysis och bisociation?",
+    "question_type": "relation",
+    "expected_concepts": [
+      "topological data analysis",
+      "bisociation"
+    ],
+    "expected_relations": [
+      [
+        "topological data analysis",
+        "stärker",
+        "bisociation"
+      ]
+    ],
+    "why_hint": "Topological data analysis kan hjälpa till att identifiera mönster och strukturer som underlättar bisociation",
+    "strength": 2.05,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q038",
+    "domain": "kognition",
+    "question": "Hur fungerar kopplingen där bisociation skiljer sig från association?",
+    "question_type": "mekanisk",
+    "expected_concepts": [
+      "bisociation",
+      "association"
+    ],
+    "expected_relations": [
+      [
+        "bisociation",
+        "skiljer sig från",
+        "association"
+      ]
+    ],
+    "why_hint": "Bisociation skiljer sig från association genom att det involverar kollisionen av två oberoende ramverk",
+    "strength": 1.73,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q039",
+    "domain": "spec",
+    "question": "Vad innebär det att JSON5 stärker config files?",
+    "question_type": "implikation",
+    "expected_concepts": [
+      "JSON5",
+      "config files"
+    ],
+    "expected_relations": [
+      [
+        "JSON5",
+        "stärker",
+        "config files"
+      ]
+    ],
+    "why_hint": "JSON5 is designed to be easier to write and maintain for config files.",
+    "strength": 2.2,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q040",
+    "domain": "webbläsare",
+    "question": "Vad är Chromium?",
+    "question_type": "vad_ar",
+    "expected_concepts": [
+      "Chromium",
+      "JSON5"
+    ],
+    "expected_relations": [
+      [
+        "Chromium",
+        "är_del_av",
+        "JSON5"
+      ]
+    ],
+    "why_hint": "Chromium includes JSON5 parsing support.",
+    "strength": 3.75,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q041",
+    "domain": "mjukvaruarkitektur",
+    "question": "På vilket sätt är analogt med brain-db-core brain stem?",
+    "question_type": "relation",
+    "expected_concepts": [
+      "brain-db-core",
+      "brain stem"
+    ],
+    "expected_relations": [
+      [
+        "brain-db-core",
+        "är_analogt_med",
+        "brain stem"
+      ]
+    ],
+    "why_hint": "brain-db-core beskrivs",
+    "strength": 1.78,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q042",
+    "domain": "ai",
+    "question": "På vilket sätt är en del av självmodellering medvetande?",
+    "question_type": "relation",
+    "expected_concepts": [
+      "självmodellering",
+      "medvetande"
+    ],
+    "expected_relations": [
+      [
+        "självmodellering",
+        "är_del_av",
+        "medvetande"
+      ]
+    ],
+    "why_hint": "Självmodellering är en del av medvetandet",
+    "strength": 1.55,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q043",
+    "domain": "IDE",
+    "question": "Hur fungerar kopplingen där WebStorm är en del av JSON5?",
+    "question_type": "mekanisk",
+    "expected_concepts": [
+      "WebStorm",
+      "JSON5"
+    ],
+    "expected_relations": [
+      [
+        "WebStorm",
+        "är_del_av",
+        "JSON5"
+      ]
+    ],
+    "why_hint": "WebStorm has built‑in JSON5 support.",
+    "strength": 2.85,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q044",
+    "domain": "artificiell intelligens",
+    "question": "Vad innebär det att CognOS reglerar epistemisk osäkerhet?",
+    "question_type": "implikation",
+    "expected_concepts": [
+      "CognOS",
+      "epistemisk osäkerhet"
+    ],
+    "expected_relations": [
+      [
+        "CognOS",
+        "reglerar",
+        "epistemisk osäkerhet"
+      ]
+    ],
+    "why_hint": "CognOS reglerar epistemisk osäkerhet genom rekursiv validering och antagande-syntes",
+    "strength": 8.55,
+    "difficulty": "easy"
+  },
+  {
+    "id": "q045",
+    "domain": "vetenskap",
+    "question": "Förklara vad forskning är i relation till utveckling.",
+    "question_type": "vad_ar",
+    "expected_concepts": [
+      "forskning",
+      "utveckling"
+    ],
+    "expected_relations": [
+      [
+        "forskning",
+        "är_analogt_med",
+        "utveckling"
+      ]
+    ],
+    "why_hint": "Forskning är analogt med utveckling",
+    "strength": 2.58,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q046",
+    "domain": "filosofi",
+    "question": "Vad är kopplingen mellan epistemisk funktion och forskning?",
+    "question_type": "relation",
+    "expected_concepts": [
+      "epistemisk funktion",
+      "forskning"
+    ],
+    "expected_relations": [
+      [
+        "epistemisk funktion",
+        "reglerar",
+        "forskning"
+      ]
+    ],
+    "why_hint": "Epistemisk funktion är en princip för att organisera forskning",
+    "strength": 2.2,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q047",
+    "domain": "datavetenskap",
+    "question": "Vad är kopplingen mellan Mistral och CognOS?",
+    "question_type": "relation",
+    "expected_concepts": [
+      "Mistral",
+      "CognOS"
+    ],
+    "expected_relations": [
+      [
+        "Mistral",
+        "stärker",
+        "CognOS"
+      ]
+    ],
+    "why_hint": "Mistral fine-tuning förbättrar CognOS prestanda",
+    "strength": 4.45,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q048",
+    "domain": "matematik",
+    "question": "Hur fungerar kopplingen där F_bisoc reglerar Bisociation Engine?",
+    "question_type": "mekanisk",
+    "expected_concepts": [
+      "F_bisoc",
+      "Bisociation Engine"
+    ],
+    "expected_relations": [
+      [
+        "F_bisoc",
+        "reglerar",
+        "Bisociation Engine"
+      ]
+    ],
+    "why_hint": "F_bisoc är en matematisk formel som reglerar bisociationen i Bisociation Engine",
+    "strength": 2.2,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q049",
+    "domain": "ekonomi",
+    "question": "Vilka konsekvenser har det att kostnadsbegränsningar påverkar CognOS?",
+    "question_type": "implikation",
+    "expected_concepts": [
+      "kostnadsbegränsningar",
+      "CognOS"
+    ],
+    "expected_relations": [
+      [
+        "kostnadsbegränsningar",
+        "påverkar",
+        "CognOS"
+      ]
+    ],
+    "why_hint": "Kostnadsbegränsningar påverkar CognOS genom att begränsa möjligheten till mänsklig granskning",
+    "strength": 4.1,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q050",
+    "domain": "datasystem",
+    "question": "Vad är NightRun?",
+    "question_type": "vad_ar",
+    "expected_concepts": [
+      "NightRun",
+      "hippocampal replay"
+    ],
+    "expected_relations": [
+      [
+        "NightRun",
+        "är_analogt_med",
+        "hippocampal replay"
+      ]
+    ],
+    "why_hint": "Båda processer återupplever inkommande data",
+    "strength": 1.82,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q051",
+    "domain": "maskinlärning",
+    "question": "På vilket sätt kombineras med epistemisk osäkerhet aleatorisk osäkerhet?",
+    "question_type": "relation",
+    "expected_concepts": [
+      "epistemisk osäkerhet",
+      "aleatorisk osäkerhet"
+    ],
+    "expected_relations": [
+      [
+        "epistemisk osäkerhet",
+        "kombineras_med",
+        "aleatorisk osäkerhet"
+      ]
+    ],
+    "why_hint": "Epistemisk osäkerhet kombineras med aleatorisk osäkerhet i CognOS",
+    "strength": 4.4,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q052",
+    "domain": "artificiell_intelligens",
+    "question": "Beskriv relationen mellan ai_governance och forskning.",
+    "question_type": "relation",
+    "expected_concepts": [
+      "ai_governance",
+      "forskning"
+    ],
+    "expected_relations": [
+      [
+        "ai_governance",
+        "är_del_av",
+        "forskning"
+      ]
+    ],
+    "why_hint": "ai_governance är ett forskningsområde",
+    "strength": 3.0,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q053",
+    "domain": "maskinlärning",
+    "question": "Varför modulerar LLM CognOS?",
+    "question_type": "mekanisk",
+    "expected_concepts": [
+      "LLM",
+      "CognOS"
+    ],
+    "expected_relations": [
+      [
+        "LLM",
+        "modulerar",
+        "CognOS"
+      ]
+    ],
+    "why_hint": "LLM-modellen modulerar CognOS genom att tillhandahålla utdata som CognOS använder för att fatta beslut",
+    "strength": 3.21,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q054",
+    "domain": "mjukvaruarkitektur",
+    "question": "Vad innebär det att brain-db-core är analogt med brain stem?",
+    "question_type": "implikation",
+    "expected_concepts": [
+      "brain-db-core",
+      "brain stem"
+    ],
+    "expected_relations": [
+      [
+        "brain-db-core",
+        "är_analogt_med",
+        "brain stem"
+      ]
+    ],
+    "why_hint": "brain-db-core hanterar abstrakta FNC-dynamiker",
+    "strength": 1.78,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q055",
+    "domain": "programmering",
+    "question": "Vad är Python 3.8+?",
+    "question_type": "vad_ar",
+    "expected_concepts": [
+      "Python 3.8+",
+      "CognOS"
+    ],
+    "expected_relations": [
+      [
+        "Python 3.8+",
+        "stärker",
+        "CognOS"
+      ]
+    ],
+    "why_hint": "Python 3.8+ stärker CognOS-projektet",
+    "strength": 4.1,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q056",
+    "domain": "programmering",
+    "question": "På vilket sätt producerar httpx HTTP-förfrågningar?",
+    "question_type": "relation",
+    "expected_concepts": [
+      "httpx",
+      "HTTP-förfrågningar"
+    ],
+    "expected_relations": [
+      [
+        "httpx",
+        "producerar",
+        "HTTP-förfrågningar"
+      ]
+    ],
+    "why_hint": "httpx-biblioteket används för att skicka HTTP GET-",
+    "strength": 1.62,
+    "difficulty": "hard"
+  },
+  {
+    "id": "q057",
+    "domain": "språk",
+    "question": "Hur relaterar ECMAScript 5.1 till JSON5?",
+    "question_type": "relation",
+    "expected_concepts": [
+      "ECMAScript 5.1",
+      "JSON5"
+    ],
+    "expected_relations": [
+      [
+        "ECMAScript 5.1",
+        "stärker",
+        "JSON5"
+      ]
+    ],
+    "why_hint": "JSON5 expands ECMAScript 5.1 features.",
+    "strength": 5.8,
+    "difficulty": "easy"
+  },
+  {
+    "id": "q058",
+    "domain": "artificiell intelligens",
+    "question": "Varför använder CognOS Python?",
+    "question_type": "mekanisk",
+    "expected_concepts": [
+      "CognOS",
+      "Python"
+    ],
+    "expected_relations": [
+      [
+        "CognOS",
+        "använder",
+        "Python"
+      ]
+    ],
+    "why_hint": "CognOS är skrivet i Python",
+    "strength": 11.85,
+    "difficulty": "easy"
+  },
+  {
+    "id": "q059",
+    "domain": "maskinlärning",
+    "question": "Vad innebär det att träningsdata kräver matematisk verifikation?",
+    "question_type": "implikation",
+    "expected_concepts": [
+      "träningsdata",
+      "matematisk verifikation"
+    ],
+    "expected_relations": [
+      [
+        "träningsdata",
+        "kräver",
+        "matematisk verifikation"
+      ]
+    ],
+    "why_hint": "Träningsdata kräver matematisk verifikation för att säkerställa kvalitet",
+    "strength": 3.35,
+    "difficulty": "medium"
+  },
+  {
+    "id": "q060",
+    "domain": "forskning",
+    "question": "Vad är research OS och hur relaterar det till forskning?",
+    "question_type": "vad_ar",
+    "expected_concepts": [
+      "research OS",
+      "forskning"
+    ],
+    "expected_relations": [
+      [
+        "research OS",
+        "reglerar",
+        "forskning"
+      ]
+    ],
+    "why_hint": "Research OS reglerar forskning",
+    "strength": 1.7,
+    "difficulty": "hard"
+  }
+]

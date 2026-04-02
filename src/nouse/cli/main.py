@@ -161,11 +161,11 @@ def daemon(
         try:
             s = get_status()
             console.print(
-                "[yellow]b76 daemon verkar redan vara igång.[/yellow]  "
+                "[yellow]nouse daemon verkar redan vara igång.[/yellow]  "
                 f"[dim]{s.get('concepts', '?')} koncept · {s.get('relations', '?')} relationer[/dim]"
             )
         except Exception:
-            console.print("[yellow]b76 daemon verkar redan vara igång.[/yellow]")
+            console.print("[yellow]nouse daemon verkar redan vara igång.[/yellow]")
 
     def _run_or_explain(*, with_web: bool = False, web_port: int = 8765) -> None:
         from nouse.daemon.main import run
@@ -178,7 +178,7 @@ def daemon(
                 if daemon_running():
                     _print_already_running()
                     console.print(
-                        "[dim]Tips: använd `b76 daemon status` eller anslut med `b76 chat`.[/dim]"
+                        "[dim]Tips: använd `nouse daemon status` eller anslut med `nouse chat`.[/dim]"
                     )
                 else:
                     console.print(
@@ -188,7 +188,7 @@ def daemon(
                         import subprocess
                         from pathlib import Path
 
-                        db_path = str(Path.home() / ".local" / "share" / "b76" / "field.kuzu")
+                        db_path = str(Path.home() / ".local" / "share" / "nouse" / "field.kuzu")
                         raw = subprocess.check_output(["lsof", "-t", db_path], text=True).strip()
                         pids = [pid for pid in raw.splitlines() if pid.strip()]
                     except Exception:
@@ -235,7 +235,7 @@ def daemon(
 def mcp_cmd(
     action: str = typer.Argument("serve", help="serve"),
 ) -> None:
-    """Starta b76 MCP-server (stdio) för externa klienter som Copilot/OpenClaw."""
+    """Starta nouse MCP-server (stdio) för externa klienter som Copilot/OpenClaw."""
     if action != "serve":
         console.print("[red]Endast 'serve' stöds just nu.[/red]")
         raise typer.Exit(code=1)
@@ -293,7 +293,7 @@ def start_mode(
         if not _ensure_daemon_background(web_port=web_port):
             console.print(
                 f"[red]Kunde inte starta daemon automatiskt.[/red] Kör: "
-                f"`b76 daemon web --port {web_port}`"
+                f"`nouse daemon web --port {web_port}`"
             )
             raise typer.Exit(1)
         console.print(f"[green]Daemon uppe.[/green] {DAEMON_BASE}")
@@ -427,7 +427,7 @@ def clawbot_bridge(
 
     act = action.strip().lower()
     if not daemon_running():
-        console.print(f"[red]b76 daemon ej nåbar på {DAEMON_BASE}[/red]")
+        console.print(f"[red]nouse daemon ej nåbar på {DAEMON_BASE}[/red]")
         raise typer.Exit(1)
 
     if act == "status":
@@ -503,7 +503,7 @@ def interact_short_alias(
         help="Visa/dölj interna tool-spår under interaktion.",
     ),
 ) -> None:
-    """Kortalias för interaktion: `b76 i`."""
+    """Kortalias för interaktion: `nouse i`."""
     chat(session_id=session_id, show_background=show_background)
 
 
@@ -700,7 +700,7 @@ def ingest(
     from datetime import datetime, timezone
     from pathlib import Path as _Path
 
-    qdir = _Path.home() / ".local" / "share" / "b76" / "capture_queue"
+    qdir = _Path.home() / ".local" / "share" / "nouse" / "capture_queue"
     qdir.mkdir(parents=True, exist_ok=True)
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     queued = qdir / f"manual_ingest_{ts}.txt"
@@ -817,7 +817,7 @@ def learn_from(
 
     from datetime import datetime, timezone
     from pathlib import Path as _Path
-    qdir = _Path.home() / ".local" / "share" / "b76" / "capture_queue"
+    qdir = _Path.home() / ".local" / "share" / "nouse" / "capture_queue"
     qdir.mkdir(parents=True, exist_ok=True)
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     queued = qdir / f"learn_from_{ts}.txt"
@@ -1812,7 +1812,7 @@ def research_queue_cmd(
 
             console.print(
                 "[yellow]Timeout när vi väntade på queue-jobbet via API.[/yellow] "
-                f"[dim]Fortsätt följa med: b76 research-queue status eller /api/queue/run_status?job_id={job_id}[/dim]"
+                f"[dim]Fortsätt följa med: nouse research-queue status eller /api/queue/run_status?job_id={job_id}[/dim]"
             )
             raise typer.Exit(2)
 
@@ -2600,7 +2600,7 @@ def ingress_cmd(
     from nouse.ingress.allowlist import list_allowed, list_pending
     from nouse.ingress.telegram import ingest_telegram_once
 
-    offset_path = Path.home() / ".local" / "share" / "b76" / "telegram_offset.txt"
+    offset_path = Path.home() / ".local" / "share" / "nouse" / "telegram_offset.txt"
 
     def _read_offset() -> int:
         if offset > 0:
@@ -2670,7 +2670,7 @@ def plugins_cmd(
             console.print("[yellow]Inga plugins laddade.[/yellow]")
             console.print(
                 "[dim]Tips: installera en pluginfil via "
-                "`b76 plugins install --source /sökväg/plugin.py --name my_plugin`.[/dim]"
+                "`nouse plugins install --source /sökväg/plugin.py --name my_plugin`.[/dim]"
             )
             return
         console.print(f"[bold cyan]Plugins ({len(rows)})[/bold cyan]")
@@ -2845,10 +2845,10 @@ def doctor_cmd(
     if action == "fix":
         # Ensure common runtime directories.
         runtime_dirs = [
-            Path.home() / ".local" / "share" / "b76",
-            Path.home() / ".local" / "share" / "b76" / "capture_queue",
-            Path.home() / ".local" / "share" / "b76" / "trace" / "events",
-            Path.home() / ".local" / "share" / "b76" / "plugins",
+            Path.home() / ".local" / "share" / "nouse",
+            Path.home() / ".local" / "share" / "nouse" / "capture_queue",
+            Path.home() / ".local" / "share" / "nouse" / "trace" / "events",
+            Path.home() / ".local" / "share" / "nouse" / "plugins",
         ]
         for d in runtime_dirs:
             d.mkdir(parents=True, exist_ok=True)
@@ -2870,7 +2870,7 @@ def doctor_cmd(
             fixes.append(f"cleared stale running sessions: {', '.join(stale)}")
 
     failures = 0
-    console.print("[bold cyan]b76 doctor[/bold cyan]")
+    console.print("[bold cyan]nouse doctor[/bold cyan]")
     for name, ok, detail, critical in checks:
         if ok:
             icon = "[green]OK[/green]"
@@ -3026,7 +3026,7 @@ def self_cmd(
         homeo = core.get("homeostasis") if isinstance(core, dict) else {}
         reflection = core.get("last_reflection") if isinstance(core, dict) else {}
         memories = (identity.get("memories") or []) if isinstance(identity, dict) else []
-        console.print("[bold cyan]b76 self[/bold cyan]")
+        console.print("[bold cyan]nouse self[/bold cyan]")
         console.print(f"  mission: {identity.get('mission')}")
         console.print(f"  values: {', '.join(identity.get('values') or [])}")
         console.print(
@@ -3188,7 +3188,7 @@ def trace_probe_cmd(
 
     if not daemon_running():
         console.print("[red]Daemon måste vara igång för trace-probe.[/red]")
-        console.print("[dim]Kör: b76 daemon web[/dim]")
+        console.print("[dim]Kör: nouse daemon web[/dim]")
         raise typer.Exit(1)
 
     pset = Path(set_path).expanduser()
@@ -3620,7 +3620,7 @@ def trace(
             if "Could not set lock on file" in str(e):
                 console.print(
                     "[red]Kunde inte läsa grafen p.g.a. fillås.[/red]\n"
-                    "[dim]Tips:[/dim] starta API-läget med `b76 daemon web` "
+                    "[dim]Tips:[/dim] starta API-läget med `nouse daemon web` "
                     "eller stoppa skrivande process innan trace."
                 )
                 raise typer.Exit(2)
@@ -3680,10 +3680,21 @@ def trace(
 
 
 @app.command(name="run")
-def run_brain() -> None:
-    """Interaktiv chat med levande hjärn-kontext — varje utbyte tränar grafen."""
-    from nouse.cli.run import run
-    run()
+def run_brain(
+    model: str = typer.Option("", "--model", "-m", help="LLM-modell (tom = autodiscover från model_policy.json)"),
+    provider: str = typer.Option("", "--provider", "-p", help="Provider: ollama | openai | anthropic | copilot"),
+    no_learn: bool = typer.Option(False, "--no-learn", help="Stäng av bakgrundsinlärning"),
+    no_context: bool = typer.Option(False, "--no-context", help="Stäng av grafkontextberikelse"),
+) -> None:
+    """Starta Nouse REPL — fungerar med Ollama, Claude, OpenAI, Copilot eller valfri LLM."""
+    import asyncio
+    from nouse.cli.run_repl import run_repl
+    asyncio.run(run_repl(
+        model_override=model or None,
+        provider_override=provider or None,
+        no_learn=no_learn,
+        no_context=no_context,
+    ))
 
 
 @app.command(name="companion")
@@ -3890,7 +3901,7 @@ def llm_cmd(
 
     elif action == "status":
         if not MODEL_POLICY_PATH.exists():
-            console.print("[yellow]Ingen model_policy.json — kör 'b76 llm setup'[/yellow]")
+            console.print("[yellow]Ingen model_policy.json — kör 'nouse llm setup'[/yellow]")
             raise typer.Exit(0)
 
         pol = json.loads(MODEL_POLICY_PATH.read_text())
@@ -3931,10 +3942,10 @@ def setup_cmd(
     Exempel:
       b76 setup                    # interaktivt val
       b76 setup small              # laptop/testmiljö, max 10 GB, LLM online
-      b76 setup medium             # desktop, max 100 GB, kontext per nod
+      nouse setup medium             # desktop, max 100 GB, kontext per nod
       b76 setup large              # airgap/enterprise, max 500 GB, hela disken
       b76 setup --status           # visa aktiv profil och disk-hälsa
-      b76 setup medium --cloud-db http://localhost:6333
+      nouse setup medium --cloud-db http://localhost:6333
     """
     from nouse.daemon.storage_tier import (
         StorageTierConfig, TIER_DESCRIPTIONS, TIER_DEFAULTS, check_disk_health,
@@ -4021,9 +4032,9 @@ def nightrun_cmd(
     Exempel:
       b76 nightrun status              # visa senaste körning
       b76 nightrun now                 # kör direkt (blockerar)
-      b76 nightrun config --mode idle --idle-minutes 30
-      b76 nightrun config --mode night
-      b76 nightrun config --mode never
+      nouse nightrun config --mode idle --idle-minutes 30
+      nouse nightrun config --mode night
+      nouse nightrun config --mode never
     """
     import asyncio
     from nouse.daemon.nightrun import NightRunConfig, NightRunStatus, run_night_consolidation
@@ -4093,9 +4104,9 @@ def nightrun_cmd(
 
         from nouse.field.surface import FieldSurface
         from nouse.daemon.state import load_state
-        db_path = Path.home() / ".local" / "share" / "b76" / "field.kuzu"
+        db_path = Path.home() / ".local" / "share" / "nouse" / "field.kuzu"
         if not db_path.exists():
-            console.print("[red]Ingen FieldSurface hittad. Kör 'b76 run' minst en gång.[/red]")
+            console.print("[red]Ingen FieldSurface hittad. Kör 'nouse run' minst en gång.[/red]")
             raise typer.Exit(1)
         field  = FieldSurface(db_path=str(db_path))
         limbic = load_state()
@@ -4126,7 +4137,7 @@ def enrich_nodes_cmd(
 ) -> None:
     """Berika noder som saknar kontext med LLM-genererade summaries.
 
-    Respekterar aktiv lagringsprofil (b76 setup):
+    Respekterar aktiv lagringsprofil (nouse setup):
       small:  Graph-backfill utan LLM
       medium: LLM-summary från källfiler (2 000 tecken/nod)
       large:  LLM-summary med djupare analys (10 000 tecken/nod)
@@ -4176,9 +4187,9 @@ def enrich_nodes_cmd(
                 console.print(f"[yellow]Daemon-anrop misslyckades: {e}[/yellow]")
             raise typer.Exit(1)
 
-    db_path = Path.home() / ".local" / "share" / "b76" / "field.kuzu"
+    db_path = Path.home() / ".local" / "share" / "nouse" / "field.kuzu"
     if not db_path.exists():
-        console.print("[red]Ingen FieldSurface hittad. Kör 'b76 run' minst en gång.[/red]")
+        console.print("[red]Ingen FieldSurface hittad. Kör 'nouse run' minst en gång.[/red]")
         raise typer.Exit(1)
 
     field  = FieldSurface(db_path=str(db_path))
@@ -4229,9 +4240,9 @@ def deepdive_cmd(
     from nouse.field.surface import FieldSurface
     from nouse.daemon.node_deepdive import deepdive_node, deepdive_batch, get_review_queue
 
-    db_path = Path.home() / ".local" / "share" / "b76" / "field.kuzu"
+    db_path = Path.home() / ".local" / "share" / "nouse" / "field.kuzu"
     if not db_path.exists():
-        console.print("[red]Ingen FieldSurface hittad. Kör 'b76 run' minst en gång.[/red]")
+        console.print("[red]Ingen FieldSurface hittad. Kör 'nouse run' minst en gång.[/red]")
         raise typer.Exit(1)
 
     # Daemon-first för alla skrivoperationer
@@ -4241,7 +4252,7 @@ def deepdive_cmd(
             client = B76Client()
             client.get_status()
             console.print("[yellow]Daemon kör — deepdive via API körs i NightRun.[/yellow]")
-            console.print("Trigga manuellt: [bold]b76 nightrun now[/bold]")
+            console.print("Trigga manuellt: [bold]nouse nightrun now[/bold]")
             raise typer.Exit(0)
         except Exception:
             pass

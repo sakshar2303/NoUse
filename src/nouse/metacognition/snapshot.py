@@ -22,7 +22,7 @@ from nouse.daemon.lock import BrainLock
 
 log = logging.getLogger("nouse.snapshot")
 
-SNAPSHOT_DIR = Path.home() / ".local" / "share" / "b76" / "snapshots"
+SNAPSHOT_DIR = Path.home() / ".local" / "share" / "nouse" / "snapshots"
 
 def create_snapshot(field: FieldSurface, tag: str = "auto") -> str:
     """
@@ -39,7 +39,7 @@ def create_snapshot(field: FieldSurface, tag: str = "auto") -> str:
     
     with BrainLock(timeout=10.0):
         # 1. KuzuDB Backup - Vi kopierar databasfilerna
-        kuzu_path = Path.home() / ".local" / "share" / "b76" / "field.kuzu"
+        kuzu_path = Path.home() / ".local" / "share" / "nouse" / "field.kuzu"
         if kuzu_path.exists():
             db_target = target_dir / "field.kuzu"
             shutil.copytree(kuzu_path, db_target, dirs_exist_ok=True)

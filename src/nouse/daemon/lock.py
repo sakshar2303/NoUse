@@ -10,7 +10,7 @@ import fcntl
 import os
 from pathlib import Path
 
-_LOCK_PATH = Path.home() / ".local" / "share" / "b76" / "brain.lock"
+_LOCK_PATH = Path.home() / ".local" / "share" / "nouse" / "brain.lock"
 
 
 class BrainLock:

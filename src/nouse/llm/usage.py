@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-USAGE_LOG_PATH = Path.home() / ".local" / "share" / "b76" / "usage_log.jsonl"
+USAGE_LOG_PATH = Path.home() / ".local" / "share" / "nouse" / "usage_log.jsonl"
 
 
 def _now_iso() -> str:

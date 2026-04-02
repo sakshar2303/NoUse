@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 
-HITL_INTERRUPTS_PATH = Path.home() / ".local" / "share" / "b76" / "hitl_interrupts.json"
+HITL_INTERRUPTS_PATH = Path.home() / ".local" / "share" / "nouse" / "hitl_interrupts.json"
 
 
 def _utcnow() -> str:

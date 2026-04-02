@@ -43,7 +43,7 @@ from typing import Iterator
 
 _log = logging.getLogger("nouse.inbox")
 
-INBOX_DIR  = Path.home() / ".local" / "share" / "b76" / "inbox"
+INBOX_DIR  = Path.home() / ".local" / "share" / "nouse" / "inbox"
 WINDOW_SEC = 12 * 3600   # 12 timmar
 
 

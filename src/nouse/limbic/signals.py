@@ -27,7 +27,7 @@ from pathlib import Path
 
 log = logging.getLogger("nouse.limbic")
 
-_STATE_FILE = Path.home() / ".local" / "share" / "b76" / "limbic_state.json"
+_STATE_FILE = Path.home() / ".local" / "share" / "nouse" / "limbic_state.json"
 
 # ── Homeostasparametrar ───────────────────────────────────────────────────────
 

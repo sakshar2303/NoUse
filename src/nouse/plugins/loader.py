@@ -20,8 +20,8 @@ from typing import Any
 
 log = logging.getLogger("nouse.plugins")
 
-RUNTIME_PLUGIN_DIR = Path.home() / ".local" / "share" / "b76" / "plugins"
-PLUGIN_REGISTRY_PATH = Path.home() / ".local" / "share" / "b76" / "plugin_registry.json"
+RUNTIME_PLUGIN_DIR = Path.home() / ".local" / "share" / "nouse" / "plugins"
+PLUGIN_REGISTRY_PATH = Path.home() / ".local" / "share" / "nouse" / "plugin_registry.json"
 
 # name -> {"schema": dict, "execute": callable, "module": str, "source": str, "version": str}
 _PLUGINS: dict[str, dict[str, Any]] = {}

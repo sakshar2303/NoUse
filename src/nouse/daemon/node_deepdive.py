@@ -148,7 +148,7 @@ class ReviewQueue:
         self._lock = asyncio.Lock()
         self._pending_review: list[str] = []   # keys väntande på djup granskning
         self._state_file = (
-            Path.home() / ".local" / "share" / "b76" / "review_queue.json"
+            Path.home() / ".local" / "share" / "nouse" / "review_queue.json"
         )
         self._load()
 

@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-_STATE_PATH = Path.home() / ".local" / "share" / "b76" / "model_router.json"
+_STATE_PATH = Path.home() / ".local" / "share" / "nouse" / "model_router.json"
 _LOCK = threading.Lock()
 
 

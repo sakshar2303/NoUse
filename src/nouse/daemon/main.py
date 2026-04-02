@@ -149,7 +149,7 @@ try:
     )
 except ValueError:
     HITL_PRIORITY_THRESHOLD = 0.98
-SOURCE_THROTTLE_FILE = Path.home() / ".local" / "share" / "b76" / "source_throttle.json"
+SOURCE_THROTTLE_FILE = Path.home() / ".local" / "share" / "nouse" / "source_throttle.json"
 SOURCE_THROTTLE_FAIL_THRESHOLD = max(
     1, int(os.getenv("NOUSE_SOURCE_THROTTLE_FAIL_THRESHOLD", "3"))
 )
@@ -1272,7 +1272,7 @@ async def brain_loop(
                 # ca en gång per dygn om loopen körs var 10:e minut (6 * 24)
                 log.info("Genererar autonom Morning Report...")
                 report = await generate_morning_report(field)
-                report_path = Path.home() / ".local" / "share" / "b76" / f"morning_report_{cycle}.md"
+                report_path = Path.home() / ".local" / "share" / "nouse" / f"morning_report_{cycle}.md"
                 try:
                     report_path.parent.mkdir(parents=True, exist_ok=True)
                     report_path.write_text(f"# B76 Morning Report (Cykel {cycle})\n\n{report}")
@@ -1428,7 +1428,7 @@ async def brain_loop(
         log.info("Brain loop stoppad.")
 
 
-_STATUS_FILE = Path.home() / ".local" / "share" / "b76" / "status.json"
+_STATUS_FILE = Path.home() / ".local" / "share" / "nouse" / "status.json"
 
 
 def _write_status(stats: dict, limbic: "LimbicState", cycle: int, nervbanor: int) -> None:

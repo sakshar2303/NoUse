@@ -12,7 +12,7 @@ from typing import Any
 
 from nouse.field.surface import FieldSurface
 
-DEFAULT_QUEUE_PATH = Path.home() / ".local" / "share" / "b76" / "research_queue.json"
+DEFAULT_QUEUE_PATH = Path.home() / ".local" / "share" / "nouse" / "research_queue.json"
 
 
 def _utcnow() -> str:

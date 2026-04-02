@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-STATE_PATH = Path.home() / ".local" / "share" / "b76" / "model_capabilities.json"
+STATE_PATH = Path.home() / ".local" / "share" / "nouse" / "model_capabilities.json"
 _LOCK = threading.Lock()
 
 _TOOLS_UNSUPPORTED_MARKERS = (

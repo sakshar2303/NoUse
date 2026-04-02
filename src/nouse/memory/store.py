@@ -10,7 +10,7 @@ from typing import Any
 
 from nouse.field.surface import FieldSurface
 
-_DEFAULT_MEMORY_DIR = Path.home() / ".local" / "share" / "b76" / "memory"
+_DEFAULT_MEMORY_DIR = Path.home() / ".local" / "share" / "nouse" / "memory"
 _DIALOGUE_PROMOTION_MIN_SUPPORT = max(
     2,
     int(os.getenv("NOUSE_MEMORY_DIALOGUE_PROMOTION_MIN_SUPPORT", "2") or 2),

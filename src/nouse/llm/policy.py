@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-MODEL_POLICY_PATH = Path.home() / ".local" / "share" / "b76" / "model_policy.json"
+MODEL_POLICY_PATH = Path.home() / ".local" / "share" / "nouse" / "model_policy.json"
 _LOCK = threading.Lock()
 
 _DEFAULT_WORKLOADS = {

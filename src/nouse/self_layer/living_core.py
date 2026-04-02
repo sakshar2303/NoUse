@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-LIVING_CORE_PATH = Path.home() / ".local" / "share" / "b76" / "self" / "living_core.json"
+LIVING_CORE_PATH = Path.home() / ".local" / "share" / "nouse" / "self" / "living_core.json"
 _LOCK = threading.Lock()
 _MAX_MEMORIES = 240
 _SELF_TRAINING_FORMULA = "known_data(any source) + meta_reflection + reflections"

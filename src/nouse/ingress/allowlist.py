@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-INGRESS_ALLOWLIST_PATH = Path.home() / ".local" / "share" / "b76" / "ingress_allowlist.json"
+INGRESS_ALLOWLIST_PATH = Path.home() / ".local" / "share" / "nouse" / "ingress_allowlist.json"
 _LOCK = threading.Lock()
 _PAIR_ALPHABET = string.ascii_uppercase + string.digits
 

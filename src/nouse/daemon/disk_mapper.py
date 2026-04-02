@@ -32,7 +32,7 @@ from typing import Iterator
 
 # ── Konfiguration ─────────────────────────────────────────────────────────────
 
-PLAN_FILE = Path.home() / ".local" / "share" / "b76" / "ingest_plan.json"
+PLAN_FILE = Path.home() / ".local" / "share" / "nouse" / "ingest_plan.json"
 
 # Filtyper och deras semantiska relevansvikt (0–1)
 FILE_RELEVANCE: dict[str, float] = {

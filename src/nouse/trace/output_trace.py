@@ -28,7 +28,7 @@ def _trace_root() -> Path:
     custom = (os.getenv("NOUSE_TRACE_DIR") or "").strip()
     if custom:
         return Path(custom)
-    return Path.home() / ".local" / "share" / "b76" / "trace"
+    return Path.home() / ".local" / "share" / "nouse" / "trace"
 
 
 def _events_dir() -> Path:

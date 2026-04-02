@@ -454,7 +454,7 @@ def _inject_env(provider: DiscoveredProvider) -> None:
         os.environ["NOUSE_OPENAI_API_KEY"] = provider.api_key
 
     # Spara till ~/.local/share/nouse/.llm_env för nästa session
-    env_file = Path.home() / ".local" / "share" / "b76" / ".llm_env"
+    env_file = Path.home() / ".local" / "share" / "nouse" / ".llm_env"
     env_file.parent.mkdir(parents=True, exist_ok=True)
     lines = [
         f'NOUSE_LLM_PROVIDER=openai_compatible\n',

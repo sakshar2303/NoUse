@@ -73,8 +73,8 @@ def discover_project_documents(max_docs: int = 8, external_repo_root: str = "", 
         iic1_root or os.getenv("NOUSE_IIC1_ROOT", _DEFAULT_IIC1_ROOT)
     )
     candidates: list[tuple[Path, str]] = [
-        (root / "README.md", "b76"),
-        (root / "STUDY_PROTOCOL.md", "b76"),
+        (root / "README.md", "nouse"),
+        (root / "STUDY_PROTOCOL.md", "nouse"),
     ]
     if external_root is not None:
         candidates.extend(
@@ -147,7 +147,7 @@ def build_kickstart_seed_tasks(
         tasks.append(
             {
                 "domain": "kickoff",
-                "concepts": ["b76", role, "project_bootstrap"],
+                "concepts": ["nouse", role, "project_bootstrap"],
                 "query": query,
                 "rationale": f"Kickstart-agent for {tpl['focus']}.",
                 "priority": round(prio, 3),

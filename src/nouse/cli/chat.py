@@ -379,7 +379,7 @@ async def chat_loop(session_id: str = "main") -> None:
     sid = str(session.get("id") or "main")
 
     console.print(Panel(
-        f"[bold cyan]b76 brain[/bold cyan]  {stats['concepts']} koncept · "
+        f"[bold cyan]nouse brain[/bold cyan]  {stats['concepts']} koncept · "
         f"{stats['relations']} relationer · {len(field.domains())} domäner\n"
         "[dim]Modellen kan läsa och SKRIVA till grafen under samtalet.[/dim]\n"
         "[dim]'exit' för att avsluta  ·  'self' för att se senaste reflektioner[/dim]",
@@ -561,7 +561,7 @@ async def chat_loop(session_id: str = "main") -> None:
 # ── Self-hantering ────────────────────────────────────────────────────────────
 
 def _show_self() -> None:
-    self_dir = Path.home() / ".local" / "share" / "b76" / "self"
+    self_dir = Path.home() / ".local" / "share" / "nouse" / "self"
     files = sorted(self_dir.glob("*.md"))[-5:] if self_dir.exists() else []
     if not files:
         console.print("[dim]Inga Self-reflektioner ännu.[/dim]")
@@ -592,7 +592,7 @@ def _living_prompt_block() -> str:
 def _agent_identity_policy() -> str:
     return (
         "Operativ identitetspolicy:\n"
-        "- Du är B76: en autonom programagent i detta system.\n"
+        "- Du är Nouse: ett autonomt kognitivt substrat i detta system.\n"
         "- Du har operativ autonomi via verktyg, graf och sessionstillstånd.\n"
         "- Säg inte att du saknar systemåtkomst i denna miljö.\n"
         "- Beskriv konkreta tekniska begränsningar om något är otillgängligt.\n"
@@ -621,7 +621,7 @@ def _remember_local_exchange(*, session_id: str, run_id: str, query: str, answer
 def _system_prompt(field: FieldSurface) -> str:
     stats   = field.stats()
     domains = sorted(field.domains())[:20]
-    return f"""Du är b76 — ett autonomt kunskapssystem byggt på en strukturell kunskapsgraf.
+    return f"""Du är Nouse — ett autonomt kunskapssystem byggt på en strukturell kunskapsgraf.
 
 GRAFENS NULÄGE: {stats['concepts']} koncept, {stats['relations']} relationer
 DOMÄNER: {', '.join(domains)}

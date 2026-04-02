@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-SESSION_EVENTS_PATH = Path.home() / ".local" / "share" / "b76" / "session_events.jsonl"
+SESSION_EVENTS_PATH = Path.home() / ".local" / "share" / "nouse" / "session_events.jsonl"
 
 
 def _now_iso() -> str:

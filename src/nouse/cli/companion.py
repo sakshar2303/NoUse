@@ -1,7 +1,7 @@
 """
-b76 companion — relationellt samtalsläge för idéutbyte
+nouse companion — relationellt samtalsläge för idéutbyte
 ======================================================
-Målet är att möjliggöra kontinuerlig dialog där både människa och b76
+Målet är att möjliggöra kontinuerlig dialog där både människa och nouse
 utvecklar en gemensam förståelse över tid.
 """
 from __future__ import annotations
@@ -32,9 +32,9 @@ DEFAULT_CHAT_MODEL = "qwen3.5:latest"
 API_INGEST = "http://127.0.0.1:8765/api/ingest"
 API_STATUS = "http://127.0.0.1:8765/api/status"
 
-COMPANION_DIR = Path.home() / ".local" / "share" / "b76" / "companion"
+COMPANION_DIR = Path.home() / ".local" / "share" / "nouse" / "companion"
 USER_CONTEXT_PATH = Path(
-    "/home/bjorn/projects/b76/docs/"
+    "/home/bjorn/projects/nouse/docs/"
     "USER_CONTEXT_BJORN_WIKSTROM.md"
 )
 
@@ -51,13 +51,13 @@ def _ingest_exchange(user_text: str, assistant_text: str, trace_id: str | None =
     payload_text = (
         "Companion exchange:\n"
         f"human: {user_text}\n"
-        f"b76: {assistant_text}\n"
+        f"nouse: {assistant_text}\n"
     )
     if _daemon_running():
         _ingest_bg(payload_text, trace_id=trace_id)
     else:
         # Fallback: queue-fil som daemon plockar senare.
-        qdir = Path.home() / ".local" / "share" / "b76" / "capture_queue"
+        qdir = Path.home() / ".local" / "share" / "nouse" / "capture_queue"
         qdir.mkdir(parents=True, exist_ok=True)
         ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         qpath = qdir / f"companion_{ts}.txt"
@@ -117,7 +117,7 @@ def _build_system_prompt() -> str:
         profile = ""
 
     return (
-        "Du är b76 i companion-läge.\n"
+        "Du är nouse i companion-läge.\n"
         "Målet är dialog, idéutbyte och gemensamt lärande med Björn.\n"
         "Var varm, nyfiken, tydlig och konkret.\n"
         "Hjälp till att:\n"
@@ -136,7 +136,7 @@ def _write_session_log(turns: list[tuple[str, str]]) -> Path:
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H%M%SZ")
     path = COMPANION_DIR / f"session_{ts}.md"
     lines = [
-        f"# b76 Companion Session — {ts}",
+        f"# nouse Companion Session — {ts}",
         "",
         f"Turns: {len(turns)}",
         "",
@@ -145,7 +145,7 @@ def _write_session_log(turns: list[tuple[str, str]]) -> Path:
         lines.append(f"## Turn {i}")
         lines.append(f"**Björn:** {u}")
         lines.append("")
-        lines.append(f"**b76:** {a}")
+        lines.append(f"**nouse:** {a}")
         lines.append("")
 
     path.write_text("\n".join(lines), encoding="utf-8")
@@ -256,7 +256,7 @@ async def companion_loop(
 
     console.print(
         Panel(
-            "[bold cyan]b76 companion[/bold cyan]\n"
+            "[bold cyan]nouse companion[/bold cyan]\n"
             "Läge för idéutbyte, reflektion och gemensam utveckling.\n"
             + (f"[dim]Topic: {topic}[/dim]\n" if topic else "")
             + f"[dim]Model: {chat_model}[/dim]\n"
@@ -298,7 +298,7 @@ async def companion_loop(
             )
             opening = resp.message.content or ""
             if opening:
-                console.print(f"[bold blue]b76[/bold blue]> {opening}")
+                console.print(f"[bold blue]nouse[/bold blue]> {opening}")
                 messages.append({"role": "assistant", "content": opening})
                 turns.append((f"[topic] {topic}", opening))
                 record_event(
@@ -381,7 +381,7 @@ async def companion_loop(
             messages.pop()
             continue
 
-        console.print(f"[bold blue]b76[/bold blue]> {reply}")
+        console.print(f"[bold blue]nouse[/bold blue]> {reply}")
         console.print(f"[dim]trace_id: {trace_id}[/dim]")
         messages.append({"role": "assistant", "content": reply})
         turns.append((user_input, reply))

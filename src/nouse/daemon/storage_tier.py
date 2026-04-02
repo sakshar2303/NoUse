@@ -30,7 +30,7 @@ from typing import Literal
 
 _log = logging.getLogger("nouse.storage_tier")
 
-CONFIG_FILE = Path.home() / ".local" / "share" / "b76" / "storage_tier.json"
+CONFIG_FILE = Path.home() / ".local" / "share" / "nouse" / "storage_tier.json"
 
 TierName = Literal["small", "medium", "large"]
 
@@ -183,7 +183,7 @@ def check_disk_health(db_path: Path | None = None) -> dict:
     cfg    = get_tier()
     limits = cfg.limits()
 
-    path = db_path or (Path.home() / ".local" / "share" / "b76" / "field.kuzu")
+    path = db_path or (Path.home() / ".local" / "share" / "nouse" / "field.kuzu")
     current_gb = 0.0
     if path.exists():
         current_gb = os.path.getsize(path) / 1024**3

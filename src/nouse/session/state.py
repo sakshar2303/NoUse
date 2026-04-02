@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-SESSION_STATE_PATH = Path.home() / ".local" / "share" / "b76" / "session_state.json"
+SESSION_STATE_PATH = Path.home() / ".local" / "share" / "nouse" / "session_state.json"
 _LOCK = threading.Lock()
 
 

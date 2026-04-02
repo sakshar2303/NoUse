@@ -54,7 +54,7 @@ FAST_DELEGATE_ENABLED = str(os.getenv("NOUSE_CHAT_FAST_DELEGATE", "1")).strip().
 }
 FAST_DELEGATE_MIN_WORDS = max(8, int(os.getenv("NOUSE_CHAT_FAST_DELEGATE_MIN_WORDS", "18")))
 INGEST_TIMEOUT_SEC = float(os.getenv("NOUSE_INGEST_TIMEOUT_SEC", "20"))
-CAPTURE_QUEUE_DIR = Path.home() / ".local" / "share" / "b76" / "capture_queue"
+CAPTURE_QUEUE_DIR = Path.home() / ".local" / "share" / "nouse" / "capture_queue"
 QUEUE_DEFAULT_TASK_TIMEOUT_SEC = float(os.getenv("NOUSE_RESEARCH_QUEUE_TASK_TIMEOUT_SEC", "180"))
 QUEUE_DEFAULT_EXTRACT_TIMEOUT_SEC = float(os.getenv("NOUSE_RESEARCH_QUEUE_EXTRACT_TIMEOUT_SEC", "30"))
 from nouse.daemon.main import brain_loop

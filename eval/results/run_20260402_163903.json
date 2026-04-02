@@ -1,0 +1,153 @@
+{
+  "timestamp": "20260402_163903",
+  "configs": [
+    {
+      "tag": "A — liten, ingen Nouse",
+      "model": "glm-4.7-flash",
+      "use_nouse": false
+    },
+    {
+      "tag": "B — liten + Nouse",
+      "model": "glm-4.7-flash",
+      "use_nouse": true
+    },
+    {
+      "tag": "C — stor, ingen Nouse",
+      "model": "glm-4.7-flash",
+      "use_nouse": false
+    }
+  ],
+  "questions": 5,
+  "results": [
+    {
+      "question_id": "q001",
+      "model": "glm-4.7-flash",
+      "use_nouse": false,
+      "question": "Beskriv relationen mellan metafilosofi och självrefererande system.",
+      "answer": "Metafilosofi är en självrefererande disciplin eftersom den analyserar filosofins egna förutsättningar och metoder. Relationen till självrefererande system är att metafilosofi utgör ett sådant system där subjektet (filosofin) diskuterar objektet (själva filosofin). Detta skapar ett reflexivt loop.\n\nGenom att undersöka sin egen struktur identifierar metafilosofi ofta paradoxer och begränsningar, vilket påminner om självreferens i logik. Det är ett verktyg för att förstå hur kunskapsskapande processer kan begränsas av sina egna premisser, utan att det behöver vara ett logiskt fel.",
+      "elapsed_s": 133.45,
+      "had_context": false,
+      "score": 3,
+      "score_reason": "2/2 koncept nämnda",
+      "hallucinated": false,
+      "max_score": 3
+    },
+    {
+      "question_id": "q002",
+      "model": "glm-4.7-flash",
+      "use_nouse": false,
+      "question": "Vad är kopplingen mellan cognos-ai och MIT License?",
+      "answer": "Det finns ingen officiell koppling mellan IBM Cognos och MIT-licensen. Cognos Analytics är proprietär mjukvara.\n\nOm det är fråga om en specifik, fristående projekt-repo som heter \"cognos-ai\" (t.ex. på GitHub), kan den vara licensierad med MIT, men det är då ett separat projekt från IBM.\n\nJag är osäker på vilken specifik implementation du syftar på.",
+      "elapsed_s": 97.48,
+      "had_context": false,
+      "score": 2,
+      "score_reason": "1/2 koncept nämnda",
+      "hallucinated": false,
+      "max_score": 3
+    },
+    {
+      "question_id": "q003",
+      "model": "glm-4.7-flash",
+      "use_nouse": false,
+      "question": "Varför är en del av Next.js JSON5?",
+      "answer": "Next.js använder **inte** JSON5 som standard.\n\nKonfigurationsfiler som `package.json` och `next.config.js` använder vanlig JSON (eller JavaScript/TypeScript).\n\nOm du refererar till JSON5 i din kod, beror det troligen på ett externt bibliotek och inte på Next.js självt. Next.js stöder inget JSON5-nativt för att läsa sina egna konfigurationsfiler.",
+      "elapsed_s": 203.24,
+      "had_context": false,
+      "score": 3,
+      "score_reason": "2/2 koncept nämnda",
+      "hallucinated": false,
+      "max_score": 3
+    },
+    {
+      "question_id": "q004",
+      "model": "glm-4.7-flash",
+      "use_nouse": false,
+      "question": "Vad innebär det att FNC Framework stärker Bisociation Engine?",
+      "answer": "",
+      "elapsed_s": 143.09,
+      "had_context": false,
+      "score": 0,
+      "score_reason": "inga förväntade koncept",
+      "hallucinated": false,
+      "max_score": 3
+    },
+    {
+      "question_id": "q005",
+      "model": "glm-4.7-flash",
+      "use_nouse": false,
+      "question": "Vad är httpx?",
+      "answer": "httpx är ett modernt, asynkront HTTP-klientbibliotek för Python. Det designades för att vara ett lättviktigt och snabbt alternativ till den vanliga `requests`-biblioteket.\n\nDet stöder HTTP/1.1, HTTP/2 och WebSockets. Exempel på funktioner inkluderar automatisk HTTP/2-uppsättning, sessionshantering och cookie-stöd. Dess asynkrona natur gör det särskilt effektivt för att hantera många samtidiga anrop, ofta används inom webbscraping och API-interaktion.",
+      "elapsed_s": 66.71,
+      "had_context": false,
+      "score": 2,
+      "score_reason": "1/2 koncept nämnda",
+      "hallucinated": false,
+      "max_score": 3
+    },
+    {
+      "question_id": "q001",
+      "model": "glm-4.7-flash",
+      "use_nouse": true,
+      "question": "Beskriv relationen mellan metafilosofi och självrefererande system.",
+      "answer": "",
+      "elapsed_s": 120.33,
+      "had_context": true,
+      "score": 0,
+      "score_reason": "inga förväntade koncept",
+      "hallucinated": false,
+      "max_score": 3
+    },
+    {
+      "question_id": "q002",
+      "model": "glm-4.7-flash",
+      "use_nouse": true,
+      "question": "Vad är kopplingen mellan cognos-ai och MIT License?",
+      "answer": "Enligt Nouse-kunskapsminnet finns en koppling där **cognos-ai** licensieras under **MIT License**.\n\nRelationen är specificerad som: `cognos-ai --[licensieras_under]--> MIT License`.\n\n*Obs: Detta är markerat som \"Uncertain / under review\" med en osäkerhet på 0,45.*",
+      "elapsed_s": 90.91,
+      "had_context": true,
+      "score": 3,
+      "score_reason": "2/2 koncept nämnda",
+      "hallucinated": false,
+      "max_score": 3
+    },
+    {
+      "question_id": "q003",
+      "model": "glm-4.7-flash",
+      "use_nouse": true,
+      "question": "Varför är en del av Next.js JSON5?",
+      "answer": "Kunskapsminnet innehåller ingen information om Next.js. Det finns dock relationer för JSON5 kopplat till 'analyticsverktyg', 'Babel' och 'Chromium', men inget som förklarar dess koppling till Next.js.",
+      "elapsed_s": 98.54,
+      "had_context": true,
+      "score": 3,
+      "score_reason": "2/2 koncept nämnda",
+      "hallucinated": false,
+      "max_score": 3
+    },
+    {
+      "question_id": "q004",
+      "model": "glm-4.7-flash",
+      "use_nouse": true,
+      "question": "Vad innebär det att FNC Framework stärker Bisociation Engine?",
+      "answer": "Kunskapsminnet innehåller relationen \"FNC Framework —[stärker]→ Bisociation Engine\" med en bevisvärde (ev) på 0,71, vilket indikerar att påståendet är osäkert och under granskning. Minnet ger inga specifika detaljer om *hur* eller *varför* detta förstärkande sker.",
+      "elapsed_s": 92.05,
+      "had_context": true,
+      "score": 3,
+      "score_reason": "2/2 koncept nämnda",
+      "hallucinated": false,
+      "max_score": 3
+    },
+    {
+      "question_id": "q005",
+      "model": "glm-4.7-flash",
+      "use_nouse": true,
+      "question": "Vad är httpx?",
+      "answer": "Enligt Nouse-minnet är **httpx** ett HTTP-bibliotek som används för att skicka HTTP POST requests.\n\nFlera specifika användningsområden nämns i minnet:\n*   För **HTTP-probing** för att kontrollera tillgänglighet.\n*   Som en kodväg för att hantera HTTP-förfrågningar när en Rust-maskin inte är tillgänglig.\n*   I `send`-metoden för att skicka meddelanden till Discord API.\n*   I `_OpenAICompatibleEngine` för att göra förfrågningar till OpenAI-kompatibla servrar.",
+      "elapsed_s": 188.01,
+      "had_context": true,
+      "score": 3,
+      "score_reason": "2/2 koncept nämnda",
+      "hallucinated": false,
+      "max_score": 3
+    }
+  ]
+}

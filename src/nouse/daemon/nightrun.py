@@ -34,8 +34,8 @@ from typing import Literal
 
 _log = logging.getLogger("nouse.nightrun")
 
-CONFIG_FILE  = Path.home() / ".local" / "share" / "b76" / "nightrun_config.json"
-STATUS_FILE  = Path.home() / ".local" / "share" / "b76" / "nightrun_status.json"
+CONFIG_FILE  = Path.home() / ".local" / "share" / "nouse" / "nightrun_config.json"
+STATUS_FILE  = Path.home() / ".local" / "share" / "nouse" / "nightrun_status.json"
 
 # Konsoliderings-trösklar
 CONSOLIDATION_MIN_EVIDENCE  = float(os.getenv("NOUSE_NIGHTRUN_MIN_EVIDENCE",  "0.45"))

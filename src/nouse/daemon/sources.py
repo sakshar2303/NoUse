@@ -16,7 +16,7 @@ from typing import Iterable, Iterator
 
 from nouse.daemon.file_text import extract_text
 
-_STATE_FILE = Path.home() / ".local" / "share" / "b76" / "source_state.json"
+_STATE_FILE = Path.home() / ".local" / "share" / "nouse" / "source_state.json"
 
 DEFAULT_INGEST_EXTENSIONS = frozenset({".md", ".txt", ".py", ".pdf"})
 DEFAULT_EXCLUDED_DIR_NAMES = frozenset(
@@ -321,7 +321,7 @@ class ChromeHistorySource:
         _save_state(self._state)
 
 
-CAPTURE_QUEUE_DIR = Path.home() / ".local" / "share" / "b76" / "capture_queue"
+CAPTURE_QUEUE_DIR = Path.home() / ".local" / "share" / "nouse" / "capture_queue"
 
 
 class CaptureQueueSource:

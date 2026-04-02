@@ -12,8 +12,8 @@ from itertools import combinations
 from pathlib import Path
 from typing import Any, Iterable
 
-MISSION_PATH = Path.home() / ".local" / "share" / "b76" / "mission.json"
-MISSION_METRICS_PATH = Path.home() / ".local" / "share" / "b76" / "mission_metrics.jsonl"
+MISSION_PATH = Path.home() / ".local" / "share" / "nouse" / "mission.json"
+MISSION_METRICS_PATH = Path.home() / ".local" / "share" / "nouse" / "mission_metrics.jsonl"
 
 
 def _utcnow() -> str:

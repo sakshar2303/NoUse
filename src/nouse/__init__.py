@@ -30,7 +30,7 @@ from nouse.kernel import (
     SCHEMA_VERSION,
 )
 
-from nouse.inject import attach, NouseBrain
+from nouse.inject import attach, NouseBrain, Axiom, ConceptProfile, QueryResult
 
 __version__ = "0.2.0"
 
