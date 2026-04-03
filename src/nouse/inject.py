@@ -321,6 +321,43 @@ class NouseBrain:
             except Exception:
                 pass
 
+    # ── Escalation API ────────────────────────────────────────────────────────
+
+    async def escalate(
+        self,
+        query: str,
+        *,
+        threshold: float = 0.5,
+        learn: bool = True,
+    ):
+        """
+        Escalating query — graf first, web fallback if confidence is low.
+
+        Returns EscalationResult with .context_block ready for LLM injection.
+
+        Usage:
+            result = await brain.escalate("vad är KuzuDB?")
+            # result.escalated == True  → web was used
+            # result.context_block      → inject into LLM prompt
+        """
+        from nouse.search.escalator import escalate_query
+        return await escalate_query(
+            query, self, threshold=threshold, learn=learn
+        )
+
+    def escalate_sync(
+        self,
+        query: str,
+        *,
+        threshold: float = 0.5,
+        learn: bool = True,
+    ):
+        """Synchronous version of escalate() for non-async contexts."""
+        from nouse.search.escalator import escalate_query_sync
+        return escalate_query_sync(
+            query, self, threshold=threshold, learn=learn
+        )
+
     def stats(self) -> dict:
         return self._field.stats()
 

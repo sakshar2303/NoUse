@@ -31,6 +31,7 @@ from nouse.kernel import (
 )
 
 from nouse.inject import attach, NouseBrain, Axiom, ConceptProfile, QueryResult
+from nouse.search.escalator import EscalationResult
 
 __version__ = "0.2.0"
 
@@ -38,6 +39,11 @@ __all__ = [
     # Inject API — one-line entry point
     "attach",
     "NouseBrain",
+    "Axiom",
+    "ConceptProfile",
+    "QueryResult",
+    # Escalation
+    "EscalationResult",
     # Residual Stream kernel
     "Kernel",
     "FieldEvent",

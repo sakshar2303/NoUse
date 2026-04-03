@@ -132,9 +132,12 @@ def generate(n_questions: int = 50, min_strength: float = 1.5,
 
     print(f"Hämtade {len(r)} kandidatrelationer (strength≥{min_strength})")
 
+    # Konvertera till plain dicts för enkel jämförelse
+    rows_as_dicts = r.to_dict(orient="records")
+
     # Gruppa per domän för balans
     by_domain: dict[str, list] = defaultdict(list)
-    for _, row in r.iterrows():
+    for row in rows_as_dicts:
         domain = str(row.get("domain") or "okänd")
         by_domain[domain].append(row)
 

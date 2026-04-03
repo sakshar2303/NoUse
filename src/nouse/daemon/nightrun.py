@@ -122,6 +122,9 @@ class ConsolidationResult:
     axioms_flagged:  int = 0    # axiom flaggade för vidare granskning
     reviews_promoted: int = 0   # flaggade axiom som befordrades via deep review
     reviews_discarded: int = 0  # flaggade axiom som kasserades via deep review
+    ghost_q_queries: int = 0    # Ghost Q: antal LLM-anrop
+    ghost_q_relations: int = 0  # Ghost Q: antal nya relationer
+    ghost_q_new_topics: int = 0 # Ghost Q: dangling edges som fylldes
     duration:        float = 0.0
 
 
@@ -285,7 +288,7 @@ async def run_night_consolidation(
             from nouse.daemon.node_deepdive import deepdive_batch
             remaining_min = (deadline - time.monotonic()) / 60
             if remaining_min >= 2.0:
-                _log.info("NightRun [9/9] DeepDive: %.1f min kvar", remaining_min)
+                _log.info("NightRun [9/10] DeepDive: %.1f min kvar", remaining_min)
                 batch = await deepdive_batch(
                     field,
                     max_nodes=10,
@@ -295,21 +298,51 @@ async def run_night_consolidation(
                 result.axioms_committed = batch.total_committed
                 result.axioms_flagged   = batch.total_flagged
                 _log.info(
-                    "NightRun [9/9] DeepDive klar: noder=%d committed=%d flagged=%d",
+                    "NightRun [9/10] DeepDive klar: noder=%d committed=%d flagged=%d",
                     batch.nodes_processed, batch.total_committed, batch.total_flagged,
                 )
         except Exception as e:
             _log.warning("NightRun DeepDive misslyckades: %s", e)
 
+    # ── Steg 10: Ghost Q — graf-crawling + modell-crawling ────────────────────
+    # Fördjupar svaga noder och expanderar grafen längs dangling edges.
+    # Kör sist i cykeln — efter konsolidering, review och deepdive.
+    if not dry_run and time.monotonic() < deadline:
+        try:
+            from nouse.daemon.ghost_q import run_ghost_q
+            from nouse.llm.model_router import ModelRouter
+            remaining_min = (deadline - time.monotonic()) / 60
+            if remaining_min >= 5.0:
+                _log.info("NightRun [10/10] Ghost Q: %.1f min kvar", remaining_min)
+                router = ModelRouter(field)
+                ghost_result = await run_ghost_q(
+                    field, router,
+                    max_queries=min(10, int(remaining_min / 2)),
+                )
+                _log.info(
+                    "NightRun [10/10] Ghost Q klar: queries=%d +rels=%d "
+                    "new_topics=%d deepened=%d skipped=%d (%.1fs)",
+                    ghost_result.queries_run,
+                    ghost_result.relations_added,
+                    ghost_result.new_topics,
+                    ghost_result.deepened_topics,
+                    ghost_result.skipped,
+                    ghost_result.duration,
+                )
+        except Exception as e:
+            _log.warning("NightRun Ghost Q misslyckades: %s", e)
+
     result.duration = round(time.monotonic() - t0, 2)
     _log.info(
         "NightRun klar: konsoliderat=%d kasserat=%d bisociationer=%d pruning=%d "
         "berikat=%d axiom_committed=%d axiom_flagged=%d "
-        "reviews_promoted=%d reviews_discarded=%d (%.1fs)",
+        "reviews_promoted=%d reviews_discarded=%d "
+        "ghost_q=%d +rels=%d new_topics=%d (%.1fs)",
         result.consolidated, result.discarded,
         result.bisociations, result.pruned, result.enriched,
         result.axioms_committed, result.axioms_flagged,
         result.reviews_promoted, result.reviews_discarded,
+        result.ghost_q_queries, result.ghost_q_relations, result.ghost_q_new_topics,
         result.duration,
     )
     return result

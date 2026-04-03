@@ -60,29 +60,75 @@ Svara ENDAST med ett JSON-objekt:
 {{"score": <0-3>, "reason": "<en mening>"}}"""
 
 
+PROVIDERS = {
+    # model-prefix → (base_url, api_key_env, response_path)
+    "cerebras/": ("https://api.cerebras.ai/v1", "CEREBRAS_API_KEY"),
+    "groq/":     ("https://api.groq.com/openai/v1", "GROQ_API_KEY"),
+    "ollama/":   (os.getenv("OLLAMA_HOST", "http://localhost:11434") + "/v1", None),
+}
+
+def _resolve_provider(model: str) -> tuple[str, dict]:
+    """Return (base_url, headers) for a model string like 'groq/llama-3.3-70b-versatile'."""
+    for prefix, (base_url, key_env) in PROVIDERS.items():
+        if model.startswith(prefix):
+            real_model = model[len(prefix):]
+            headers = {}
+            if key_env:
+                api_key = os.getenv(key_env, "")
+                headers["Authorization"] = f"Bearer {api_key}"
+            return base_url, real_model, headers
+    # Default: Ollama native API
+    return None, model, {}
+
+
 async def call_llm(client, model: str, system: str, user: str,
-                   timeout: float = 300.0) -> str:
-    """Direct httpx call to Ollama /api/chat — avoids streaming/wrapper issues."""
+                   timeout: float = 60.0) -> str:
+    """Calls Ollama native API or OpenAI-compatible API based on model prefix."""
     import httpx
-    ollama_base = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-    payload = {
-        "model": model,
-        "stream": False,
-        "messages": [
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ],
-    }
-    try:
-        async with httpx.AsyncClient(timeout=timeout) as hx:
-            r = await hx.post(f"{ollama_base}/api/chat", json=payload)
-            r.raise_for_status()
-            data = r.json()
-            return data.get("message", {}).get("content", "") or ""
-    except asyncio.TimeoutError:
-        return "[TIMEOUT]"
-    except Exception as e:
-        return f"[ERROR: {e}]"
+
+    base_url, real_model, headers = _resolve_provider(model)
+
+    if base_url is None:
+        # Ollama native /api/chat
+        ollama_base = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+        payload = {
+            "model": real_model,
+            "stream": False,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+        }
+        try:
+            async with httpx.AsyncClient(timeout=timeout) as hx:
+                r = await hx.post(f"{ollama_base}/api/chat", json=payload)
+                r.raise_for_status()
+                data = r.json()
+                return data.get("message", {}).get("content", "") or ""
+        except asyncio.TimeoutError:
+            return "[TIMEOUT]"
+        except Exception as e:
+            return f"[ERROR: {e}]"
+    else:
+        # OpenAI-compatible /chat/completions
+        payload = {
+            "model": real_model,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            "max_tokens": 300,
+        }
+        try:
+            async with httpx.AsyncClient(timeout=timeout, headers=headers) as hx:
+                r = await hx.post(f"{base_url}/chat/completions", json=payload)
+                r.raise_for_status()
+                data = r.json()
+                return data["choices"][0]["message"]["content"] or ""
+        except asyncio.TimeoutError:
+            return "[TIMEOUT]"
+        except Exception as e:
+            return f"[ERROR: {e}]"
 
 
 async def run_single(client, model: str, question: dict,
@@ -279,23 +325,37 @@ async def main(args):
     # Kör bara A och B om samma modell (undviker redundant C)
     run_configs = configs[:2] if args.small == args.large else configs
 
-    for cfg in run_configs:
+    async def run_config(cfg: dict) -> list[dict]:
         model = cfg["model"]
         use_nouse = cfg["use_nouse"]
         tag = cfg["tag"]
         print(f"\n{'='*60}")
         print(f"🔄 {tag}")
-        print(f"   Modell: {model}  Nouse: {use_nouse}")
+        print(f"   Modell: {model}  Nouse: {use_nouse}  Concurrency: {args.concurrency}")
         print(f"{'='*60}")
 
-        for i, question in enumerate(questions, 1):
-            result = await run_single(client, model, question, use_nouse,
-                                      brain if use_nouse else None)
-            print(f"  [{i:2d}/{len(questions)}] {question['id']} "
-                  f"({result['elapsed_s']:.1f}s) "
-                  f"{'[ctx]' if result['had_context'] else '[no ctx]'} "
-                  f"→ {result['answer'][:60]}...")
-            all_results.append(result)
+        results: list[dict] = []
+        sem = asyncio.Semaphore(args.concurrency)
+        done = 0
+
+        async def run_one(question: dict) -> dict:
+            nonlocal done
+            async with sem:
+                result = await run_single(client, model, question, use_nouse,
+                                          brain if use_nouse else None)
+                done += 1
+                print(f"  [{done:3d}/{len(questions)}] {question['id']} "
+                      f"({result['elapsed_s']:.1f}s) "
+                      f"{'[ctx]' if result['had_context'] else '[no ctx]'} "
+                      f"→ {result['answer'][:60]}...")
+                return result
+
+        results = await asyncio.gather(*[run_one(q) for q in questions])
+        return list(results)
+
+    for cfg in run_configs:
+        cfg_results = await run_config(cfg)
+        all_results.extend(cfg_results)
 
     # Scoring — använd keyword-match om --no-judge, annars LLM judge
     print(f"\n🏆 Scoring...")
@@ -350,5 +410,7 @@ if __name__ == "__main__":
                         help="Visa utan LLM-anrop")
     parser.add_argument("--no-judge", action="store_true",
                         help="Använd keyword-scoring istället för LLM judge")
+    parser.add_argument("--concurrency", type=int, default=5,
+                        help="Antal parallella LLM-anrop per config (default: 5)")
     args = parser.parse_args()
     asyncio.run(main(args))
