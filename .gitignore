@@ -7,3 +7,6 @@ build/
 .env
 *.kuzu
 *.kuzu.lock
+_bmad/
+IMG/Namnlös design.png
+eval/results/run_20260402_*.json
