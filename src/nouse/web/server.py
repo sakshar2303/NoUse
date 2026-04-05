@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 from contextlib import asynccontextmanager
 from uuid import uuid4
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -846,6 +846,64 @@ def get_graph_focus(
     }
 
 
+@app.get("/api/events")
+async def graph_events_sse(request: Request):
+    """
+    Server-Sent Events — strömmar realtidshändelser från NoUse till browsern.
+
+    Händelsetyper:
+      heartbeat       — stats var 4:e sekund
+      edge_added      — ny kant (src, rel, tgt, evidence_score)
+      growth_probe    — axon growth cone startar
+      synapse_formed  — growth cone skapade en korsdomän-koppling
+      meta_axiom      — meta-axiom crystalliserat
+    """
+    from nouse.field.events import drain as _drain
+
+    async def _generate():
+        tick = 0
+        while True:
+            if await request.is_disconnected():
+                break
+
+            # Töm event-bussen
+            events = _drain(max_events=50)
+            for evt in events:
+                yield f"data: {json.dumps(evt, ensure_ascii=False)}\n\n"
+
+            # Heartbeat var 4:e sekund (8 × 0.5s)
+            tick += 1
+            if tick % 8 == 0:
+                try:
+                    f = get_field()
+                    s = f.stats()
+                    ls = load_state()
+                    hb = {
+                        "type": "heartbeat",
+                        "ts": round(__import__("time").time() * 1000),
+                        "concepts": s["concepts"],
+                        "relations": s["relations"],
+                        "cycle": ls.cycle,
+                        "arousal": round(ls.arousal, 3),
+                        "dopamine": round(ls.dopamine, 3),
+                    }
+                    yield f"data: {json.dumps(hb)}\n\n"
+                except Exception:
+                    pass
+
+            await asyncio.sleep(0.5)
+
+    return StreamingResponse(
+        _generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",  # inaktivera nginx-buffring
+            "Connection": "keep-alive",
+        },
+    )
+
+
 @app.get("/api/journal/search")
 def get_journal_search(q: str = "", limit: int = 8):
     """Sök i senaste journalposter för fokusläge och snabb triage i cockpit."""
@@ -1584,6 +1642,12 @@ def get_system_events(limit: int = 20, session_id: str = ""):
     }
 
 
+@app.get("/api/brain_regions")
+def get_brain_regions():
+    from nouse.field.brain_topology import regions_as_dict
+    return {"ok": True, "regions": regions_as_dict()}
+
+
 @app.get("/api/models/policy")
 def get_models_policy(workload: str = "chat"):
     return {"ok": True, "policy": get_workload_policy(workload)}
@@ -1770,6 +1834,61 @@ class ConductorCycleRequest(BaseModel):
     vectors: list[list[float]] = []
 
 
+class ContextRequest(BaseModel):
+    query: str
+    top_k: int = 5
+
+
+@app.post("/api/context")
+async def post_context(req: ContextRequest):
+    """
+    Lättviktigt read-only kontext-lookup för hooks och externa agenter.
+    Returnerar relevanta noder + relationer utan att starta LLM.
+    Anropas av: Claude Code PreToolUse-hook, externa agenter.
+    """
+    field = get_field()
+    q = str(req.query or "").strip()[:300]
+    if not q:
+        return {"ok": False, "context_block": "", "confidence": 0.0, "nodes": []}
+
+    try:
+        # Hämta topp-K noder via enkel label-sökning
+        rows = field.concepts()
+        q_lower = q.lower()
+        hits = [
+            r for r in rows
+            if q_lower in str(r.get("name", "")).lower()
+            or q_lower in str(r.get("domain", "")).lower()
+        ][:req.top_k]
+
+        if not hits:
+            return {"ok": True, "context_block": "", "confidence": 0.0, "nodes": []}
+
+        # Bygg kontext-block
+        lines = []
+        for node in hits:
+            name = node.get("name", "")
+            domain = node.get("domain", "")
+            rels = field.out_relations(name)[:3]
+            rel_str = ", ".join(
+                f"{r.get('type','?')} → {r.get('target','?')}" for r in rels
+            )
+            lines.append(f"• {name} [{domain}]" + (f": {rel_str}" if rel_str else ""))
+
+        confidence = min(1.0, len(hits) / max(req.top_k, 1))
+        context_block = "\n".join(lines)
+
+        return {
+            "ok": True,
+            "context_block": context_block,
+            "confidence": round(confidence, 2),
+            "nodes": [n.get("name") for n in hits],
+        }
+    except Exception as exc:
+        log.warning("api/context fel: %s", exc)
+        return {"ok": False, "context_block": "", "confidence": 0.0, "nodes": []}
+
+
 def _queue_ingest_fallback(text: str, source: str, reason: str) -> str:
     CAPTURE_QUEUE_DIR.mkdir(parents=True, exist_ok=True)
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -1954,7 +2073,14 @@ async def post_ingest(req: IngestRequest):
 
 @app.post("/api/conductor/cycle")
 async def post_conductor_cycle(req: ConductorCycleRequest):
-    conductor = CognitiveConductor(memory=get_memory())
+    from nouse.learning_coordinator import LearningCoordinator
+    field = get_field()
+    limbic = load_state()
+    conductor = CognitiveConductor(
+        memory=get_memory(),
+        field_surface=field,
+        coordinator=LearningCoordinator(field, limbic),
+    )
     result = await conductor.run_cognitive_cycle(
         episode_text=req.text,
         domain=req.domain,
@@ -1971,6 +2097,9 @@ async def post_conductor_cycle(req: ConductorCycleRequest):
         "workspace_winner": result.workspace_winner,
         "new_relations": result.new_relations,
         "self_update_proposed": result.self_update_proposed,
+        "synthesis_cascade_queued": result.synthesis_queued,
+        "cc_prediction": result.cc_prediction,
+        "cc_confidence": result.cc_confidence,
         "tda": {
             "h0_a": result.tda_h0_a,
             "h1_a": result.tda_h1_a,
@@ -3939,6 +4068,118 @@ async def post_agent_chat(req: AgentRequest):
                 )
 
     return StreamingResponse(stream_agent(), media_type="application/x-ndjson")
+
+# ── Public Brain API (used by NouseBrainHTTP in inject.py) ───────────────────
+
+class _BrainQueryRequest(BaseModel):
+    question: str
+    top_k: int = 6
+
+class _BrainLearnRequest(BaseModel):
+    prompt: str
+    response: str = ""
+    source: str = "conversation"
+
+class _BrainAddRequest(BaseModel):
+    src: str
+    rel_type: str
+    tgt: str
+    why: str = ""
+    evidence_score: float = 0.6
+
+
+@app.post("/api/brain/query")
+def brain_query(req: _BrainQueryRequest):
+    """
+    Run brain.query() via HTTP — used by NouseBrainHTTP when daemon is running.
+    Returns QueryResult as JSON so external callers never touch KuzuDB directly.
+    """
+    from nouse.inject import NouseBrain, _rows_to_axioms
+    field = get_field()
+    # Reuse NouseBrain logic without opening a second DB connection
+    brain = object.__new__(NouseBrain)
+    brain._field = field
+    brain._read_only = True
+    brain._input_hooks = []
+    brain._output_hooks = []
+    result = brain.query(req.question, top_k=req.top_k)
+    return {
+        "query":         result.query,
+        "confidence":    result.confidence,
+        "has_knowledge": result.has_knowledge,
+        "domains":       result.domains,
+        "concepts": [
+            {
+                "name":          c.name,
+                "summary":       c.summary,
+                "claims":        c.claims,
+                "evidence_refs": c.evidence_refs,
+                "related_terms": c.related_terms,
+                "uncertainty":   c.uncertainty,
+                "revision_count": c.revision_count,
+            }
+            for c in result.concepts
+        ],
+        "axioms": [
+            {
+                "src":      a.src,
+                "rel":      a.rel,
+                "tgt":      a.tgt,
+                "evidence": a.evidence,
+                "flagged":  a.flagged,
+                "why":      a.why,
+                "strength": a.strength,
+            }
+            for a in result.axioms
+        ],
+    }
+
+
+@app.post("/api/brain/learn")
+async def brain_learn(req: _BrainLearnRequest):
+    """Extract knowledge from a prompt+response pair and write to graph."""
+    from nouse.daemon.extractor import extract_relations_with_diagnostics
+    from nouse.daemon.write_queue import enqueue_write
+    field = get_field()
+    text = (req.prompt + "\n" + req.response).strip()
+    if not text:
+        return {"ok": False, "error": "empty text"}
+    meta = {"source": req.source, "path": req.source}
+    try:
+        rels, _diag = await extract_relations_with_diagnostics(text, meta)
+
+        async def _write():
+            for r in rels:
+                field.add_concept(r["src"], r.get("domain_src", "external"), source=req.source)
+                field.add_concept(r["tgt"], r.get("domain_tgt", "external"), source=req.source)
+                field.add_relation(r["src"], r["type"], r["tgt"],
+                                   why=r.get("why", ""),
+                                   evidence_score=float(r.get("evidence_score") or 0.5))
+            return len(rels)
+
+        added = await enqueue_write(_write())
+        return {"ok": True, "relations_added": added}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/brain/add")
+async def brain_add(req: _BrainAddRequest):
+    """Directly add a single relation to the graph."""
+    from nouse.daemon.write_queue import enqueue_write
+    field = get_field()
+
+    async def _write():
+        field.add_relation(req.src, req.rel_type, req.tgt,
+                           why=req.why,
+                           evidence_score=max(0.0, min(1.0, req.evidence_score)))
+
+    try:
+        await enqueue_write(_write())
+        return {"ok": True}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
 
 def start_server(host="127.0.0.1", port=8765):
     uvicorn.run("nouse.web.server:app", host=host, port=port, reload=False)

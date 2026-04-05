@@ -23,6 +23,7 @@ from nouse.llm.model_router import order_models_for_workload, record_model_resul
 from nouse.llm.policy import resolve_model_candidates
 from nouse.ollama_client.client import AsyncOllama
 from nouse.mcp_gateway.gateway import MCP_TOOLS, is_mcp_tool, execute_mcp_tool
+from nouse.tda.bridge import identify_knowledge_gaps
 
 log = logging.getLogger("nouse.curiosity")
 
@@ -96,6 +97,34 @@ def _curiosity_model_candidates(task: dict[str, Any] | None) -> list[str]:
     defaults.extend(_split_model_list(GLOBAL_CANDIDATES_RAW))
     return resolve_model_candidates("curiosity", defaults)
 
+def _find_h1_gap_target(
+    field: FieldSurface,
+    domains: list[str],
+) -> tuple[str, list[str], bool]:
+    """
+    Letar efter H1-kunskapsluckor: konceptpar som är indirekt kopplade
+    men saknar direkt relation. Returnerar (domain, concepts, h1_gap_mode).
+    h1_gap_mode=True innebär att vi hittade ett H1-par att undersöka.
+    """
+    best_domain = ""
+    best_pair: list[str] = []
+    best_score = 0.0
+
+    for d in domains:
+        gaps = identify_knowledge_gaps(field, d, max_gaps=1, min_degree=2)
+        if gaps:
+            a, b, score = gaps[0]
+            if score > best_score:
+                best_score = score
+                best_domain = d
+                best_pair = [a, b]
+
+    if best_domain and best_pair:
+        return best_domain, best_pair, True
+
+    return "", [], False
+
+
 async def run_curiosity_burst(
     field: FieldSurface,
     limbic: LimbicState,
@@ -160,31 +189,66 @@ async def run_curiosity_burst(
                 target_domain = d
 
         if not target_domain:
-            log.info("Curiosity: Inga isolerade graf-öar hittades (H0=1 överallt).")
-            return None
+            # H0=1 överallt — prova H1-gap-detektion istället
+            log.info("Curiosity: Inga isolerade graf-öar (H0=1). Söker H1-kunskapsluckor.")
+            target_domain, sample_concepts, h1_gap_mode = _find_h1_gap_target(field, domains)
+            if not target_domain:
+                log.info("Curiosity: Inga kunskapsluckor hittades. Inget att undersöka.")
+                return None
 
-        concepts = [c["name"] for c in field.concepts(domain=target_domain)]
-        if len(concepts) < 2:
-            return None
+            if h1_gap_mode:
+                a, b = sample_concepts[0], sample_concepts[1]
+                log.info(
+                    f"Curiosity H1-gap: {a} ↔ {b} i '{target_domain}' "
+                    f"(indirekt kopplade men saknar direkt relation)"
+                )
+                system_prompt = (
+                    "Du är B76, en autonom AI-forskningsagent. "
+                    f"Din topologiska analys visar att '{a}' och '{b}' i domänen '{target_domain}' "
+                    f"delar gemensamma grannar i kunskapsgrafen men saknar en direkt verifierad relation. "
+                    "Detta är ett H1-kunskapshål — ett topologiskt mönster som antyder att en "
+                    "relation borde finnas men ännu inte har bevisats. "
+                    "Bruk dina verktyg (web_search, fetch_url, find_local_files, search_local_text, "
+                    "read_local_file) för att undersöka om det finns en direkt koppling. "
+                    "Skriv en minirapport: finns relationen? Vad är evidensen? Vad är osäkerheten?"
+                )
+            else:
+                import random
+                random.shuffle(sample_concepts)
+                sample_concepts = sample_concepts[:3]
+                system_prompt = (
+                    "Du är B76, en autonom AI-forskningsagent. "
+                    f"Din databas visar att koncepten {', '.join(sample_concepts)} i domänen "
+                    f"'{target_domain}' är matematiskt isolerade från varandra (Topologisk H0 > 1). "
+                    "Bruk dina verktyg (web_search, fetch_url, list_local_mounts, "
+                    "find_local_files, search_local_text, read_local_file) för att lära dig mer och "
+                    f"hitta sambanden mellan dem, eller fördjupa förståelsen kring '{target_domain}'. "
+                    "Skriv sedan en detaljerad faktatext (en minirapport) om vad du upptäckte. "
+                    "Fokusera stenhårt på hur de relaterar och nya fakta som borde minnas."
+                )
+        else:
+            concepts = [c["name"] for c in field.concepts(domain=target_domain)]
+            if len(concepts) < 2:
+                return None
 
-        import random
-        random.shuffle(concepts)
-        sample_concepts = concepts[:3]
-        log.info(
-            f"Curiosity-mål låst på {target_domain} (H0={target_h0}). "
-            f"Undersöker: {', '.join(sample_concepts)}"
-        )
+            import random
+            random.shuffle(concepts)
+            sample_concepts = concepts[:3]
+            log.info(
+                f"Curiosity-mål låst på {target_domain} (H0={target_h0}). "
+                f"Undersöker: {', '.join(sample_concepts)}"
+            )
 
-        system_prompt = (
-            "Du är B76, en autonom AI-forskningsagent. "
-            f"Din databas visar att koncepten {', '.join(sample_concepts)} i domänen "
-            f"'{target_domain}' är matematiskt isolerade från varandra (Topologisk H0 > 1). "
-            "Bruk dina verktyg (web_search, fetch_url, list_local_mounts, "
-            "find_local_files, search_local_text, read_local_file) för att lära dig mer och "
-            f"hitta sambanden mellan dem, eller fördjupa förståelsen kring '{target_domain}'. "
-            "Skriv sedan en detaljerad faktatext (en minirapport) om vad du upptäckte. "
-            "Fokusera stenhårt på hur de relaterar och nya fakta som borde minnas."
-        )
+            system_prompt = (
+                "Du är B76, en autonom AI-forskningsagent. "
+                f"Din databas visar att koncepten {', '.join(sample_concepts)} i domänen "
+                f"'{target_domain}' är matematiskt isolerade från varandra (Topologisk H0 > 1). "
+                "Bruk dina verktyg (web_search, fetch_url, list_local_mounts, "
+                "find_local_files, search_local_text, read_local_file) för att lära dig mer och "
+                f"hitta sambanden mellan dem, eller fördjupa förståelsen kring '{target_domain}'. "
+                "Skriv sedan en detaljerad faktatext (en minirapport) om vad du upptäckte. "
+                "Fokusera stenhårt på hur de relaterar och nya fakta som borde minnas."
+            )
 
     client = AsyncOllama(timeout_sec=CURIOSITY_TIMEOUT_SEC)
     model_candidates = order_models_for_workload("curiosity", _curiosity_model_candidates(task))

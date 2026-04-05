@@ -49,6 +49,11 @@ LAMBDA_MAX = 0.9
 
 # ── Tillståndsmodell ─────────────────────────────────────────────────────────
 
+# Tonic EMA-koefficient: hur snabbt baslinjen anpassar sig
+# α=0.002 → ~500 cykler för att nå ny baslinje (ca 17h vid 2min/cykel)
+TONIC_EMA_ALPHA = 0.002
+
+
 @dataclass
 class LimbicState:
     dopamine:       float = DOPAMINE_BASELINE
@@ -56,6 +61,10 @@ class LimbicState:
     acetylcholine:  float = ACETYLCHOLINE_BASELINE
     cycle:          int   = 0
     lam:            float = 0.5   # nuvarande λ (kreativitetskoefficient)
+
+    # Tonic baslinjer — rör sig långsamt, representerar "personlighetsdisposition"
+    tonic_dopamine:      float = DOPAMINE_BASELINE
+    tonic_noradrenaline: float = NORADRENALINE_BASELINE
 
     @property
     def arousal(self) -> float:
@@ -80,6 +89,32 @@ class LimbicState:
     def wta_beta(self) -> float:
         """WTA softmax temperature för Global Workspace."""
         return self.acetylcholine * 2.0   # β ∈ [0, ~4]
+
+    @property
+    def phasic_dopamine(self) -> float:
+        """Phasic signal: avvikelse från tonic baslinje. Positiv = belöning, negativ = besvikelse."""
+        return self.dopamine - self.tonic_dopamine
+
+    @property
+    def phasic_noradrenaline(self) -> float:
+        """Phasic signal: avvikelse från tonic baslinje. Positiv = oväntat, negativ = tråkigt."""
+        return self.noradrenaline - self.tonic_noradrenaline
+
+    @property
+    def disposition_label(self) -> str:
+        """
+        Beskriver systemets nuvarande karaktärsdisposition baserat på tonic-nivåer.
+        Emergerar ur erfarenhet — inte hårdkodat.
+        """
+        if self.tonic_dopamine > 0.65 and self.tonic_noradrenaline > 0.45:
+            return "nyfiken-entusiastisk"
+        if self.tonic_dopamine > 0.65:
+            return "belöningsorienterad"
+        if self.tonic_noradrenaline > 0.45:
+            return "vaksam-kritisk"
+        if self.tonic_dopamine < 0.35:
+            return "konservativ-konsoliderande"
+        return "balanserad"
 
 
 def load_state() -> LimbicState:
@@ -178,14 +213,25 @@ def run_limbic_cycle(
     update_acetylcholine(state, active_domains)
     update_lambda(state)
 
+    # Tonic EMA — uppdatera långsamma baslinjer (personlighetsdisposition)
+    state.tonic_dopamine = (
+        TONIC_EMA_ALPHA * state.dopamine
+        + (1 - TONIC_EMA_ALPHA) * state.tonic_dopamine
+    )
+    state.tonic_noradrenaline = (
+        TONIC_EMA_ALPHA * state.noradrenaline
+        + (1 - TONIC_EMA_ALPHA) * state.tonic_noradrenaline
+    )
+
     log.info(
         f"Limbic [cykel {state.cycle}]: "
-        f"DA={state.dopamine:.2f} "
-        f"NA={state.noradrenaline:.2f} "
+        f"DA={state.dopamine:.2f}(tonic={state.tonic_dopamine:.2f}) "
+        f"NA={state.noradrenaline:.2f}(tonic={state.tonic_noradrenaline:.2f}) "
         f"ACh={state.acetylcholine:.2f} "
         f"λ={state.lam:.2f} "
         f"arousal={state.arousal:.2f} "
-        f"perf={state.performance:.2f}"
+        f"perf={state.performance:.2f} "
+        f"disposition={state.disposition_label}"
     )
 
     save_state(state)

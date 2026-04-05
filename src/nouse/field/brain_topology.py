@@ -1,0 +1,240 @@
+"""
+brain_topology.py — Spatial mapping: NoUse domains → brain regions → 3D coordinates.
+
+The knowledge graph is laid out AS a brain:
+  - Frontal cortex   : logic, planning, formal systems        (+z = forward)
+  - Parietal cortex  : integration, spatial causality         (+y = top)
+  - Temporal lobes   : language/music (left), creativity (right)
+  - Occipital        : pattern recognition, classification    (-z = back)
+  - Prefrontal       : meta-cognition, synthesis nodes
+  - Hippocampus      : new connections, episodic memory
+  - Amygdala         : emotional weighting, values, arousal
+  - Cerebellum       : procedural, automatic, skill knowledge
+  - Brainstem        : axiomatic constants, fundamental states
+  - Corpus callosum  : cross-domain bridges (center)
+
+Coordinate system: right-hand, Y-up, Z-forward (same as Three.js scene).
+All positions are rough radial offsets from center — force-graph will settle
+nodes around these attractors.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Tuple
+
+# ── Region definitions ────────────────────────────────────────────────────────
+
+@dataclass
+class BrainRegion:
+    name: str
+    label_sv: str
+    position: Tuple[float, float, float]   # (x, y, z)
+    color_hex: str
+    description: str
+    domains: list[str] = field(default_factory=list)
+    # Loose keyword matching for unlabelled domains
+    keywords: list[str] = field(default_factory=list)
+
+
+BRAIN_REGIONS: dict[str, BrainRegion] = {
+    "prefrontal": BrainRegion(
+        name="prefrontal",
+        label_sv="Prefrontal cortex",
+        position=(0.0, 25.0, 105.0),
+        color_hex="#ffd700",
+        description="Metakognition, syntes, planering på hög abstraktionsnivå",
+        domains=["meta", "metacognition", "metakognition", "syntes", "synthesis",
+                 "självreflektion", "epistemologi", "medvetande", "consciousness",
+                 "självorganisering"],
+        keywords=["meta", "synth", "reflex", "plan", "abstract", "strategi"],
+    ),
+    "frontal": BrainRegion(
+        name="frontal",
+        label_sv="Frontallob",
+        position=(0.0, 0.0, 85.0),
+        color_hex="#4e9af1",
+        description="Logik, matematik, formella system, beslut, resonemang",
+        domains=["matematik", "logik", "formella_system", "formell_logik",
+                 "bevisföring", "algebra", "aritmetik", "sats", "theorem",
+                 "beslutsfattande", "reasoning", "inference", "deduktion",
+                 "induktion", "statistik", "sannolikhet", "probability"],
+        keywords=["math", "logic", "formal", "proof", "axiom_app", "calcul",
+                  "algebra", "theorem", "decision", "reason"],
+    ),
+    "parietal": BrainRegion(
+        name="parietal",
+        label_sv="Parietallob",
+        position=(0.0, 65.0, 40.0),
+        color_hex="#4ef1c4",
+        description="Rumslig integration, kausalitet, sensorisk syntes, relationer",
+        domains=["kognition", "kausalitet", "rumslig_kognition", "integration",
+                 "systemteori", "nätverk", "topologi", "geometri",
+                 "fysiologi", "biomekanik", "perception","physics","fysik"],
+        keywords=["spatial", "causal", "integrat", "relation", "system",
+                  "network", "topolog", "geometr", "physic", "fysik"],
+    ),
+    "temporal_left": BrainRegion(
+        name="temporal_left",
+        label_sv="Temporallob (vänster) — språk",
+        position=(-85.0, 0.0, 0.0),
+        color_hex="#b04ef1",
+        description="Språk, semantik, lingvistik, minne för fakta",
+        domains=["lingvistik", "språk", "semantik", "syntax", "pragmatik",
+                 "kommunikation", "retorik", "semiotik", "narrativ", "berättande",
+                 "text", "litteratur", "poesi", "skrivande", "läsning"],
+        keywords=["lingu", "lang", "semant", "syntax", "narrat", "text",
+                  "liter", "communic", "rhetoric", "semiot"],
+    ),
+    "temporal_right": BrainRegion(
+        name="temporal_right",
+        label_sv="Temporallob (höger) — kreativitet",
+        position=(85.0, 0.0, 0.0),
+        color_hex="#f14eb0",
+        description="Kreativitet, musik, spontan association, humor",
+        domains=["kreativitet", "musik", "konst", "estetik", "poesi",
+                 "improvisation", "analogi", "metafor", "humor",
+                 "fantasi", "imagination", "design", "arkitektur"],
+        keywords=["creat", "music", "art", "aesth", "improv", "humor",
+                  "design", "analogi", "metaphor", "fantasi"],
+    ),
+    "occipital": BrainRegion(
+        name="occipital",
+        label_sv="Occipitallob",
+        position=(0.0, 0.0, -85.0),
+        color_hex="#f1c44e",
+        description="Mönsterigenkänning, klassificering, perceptuell kategorisering",
+        domains=["mönsterigenkänning", "klassificering", "maskininlärning",
+                 "neurala_nätverk", "datorseende", "igenkänning",
+                 "kategorisering", "taxonomi", "typologi","ml","ai"],
+        keywords=["pattern", "classif", "recog", "vision", "neural",
+                  "ml", "deep_learn", "categ", "taxonom"],
+    ),
+    "hippocampus": BrainRegion(
+        name="hippocampus",
+        label_sv="Hippocampus",
+        position=(0.0, -40.0, 10.0),
+        color_hex="#4ef160",
+        description="Nya kopplingar, episodiskt minne, navigation, inlärning",
+        domains=["episodiskt_minne", "minne", "inlärning", "associationer",
+                 "brygga", "bridge", "ny_kunskap", "förvärv",
+                 "navigation", "kartläggning", "konsolidering"],
+        keywords=["memory", "episod", "learn", "bridge", "assoc",
+                  "navigat", "new_", "acquis"],
+    ),
+    "amygdala": BrainRegion(
+        name="amygdala",
+        label_sv="Amygdala",
+        position=(32.0, -52.0, 12.0),
+        color_hex="#f16b4e",
+        description="Emotionell viktning, värden, arousal, belöningssystem",
+        domains=["emotion", "känslor", "värde", "etik", "moral",
+                 "motivation", "belöning", "arousal", "stress",
+                 "välmående", "psykologi", "affekt"],
+        keywords=["emot", "value", "ethic", "moral", "motiv",
+                  "reward", "arousal", "stress", "psych", "affekt"],
+    ),
+    "cerebellum": BrainRegion(
+        name="cerebellum",
+        label_sv="Lillhjärnan",
+        position=(0.0, -82.0, -55.0),
+        color_hex="#8af14e",
+        description="Procedurellt vetande, automatik, teknisk skicklighet",
+        domains=["motorik", "procedurellt", "algoritm", "automatisering",
+                 "teknik", "ingenjörsvetenskap", "programmering",
+                 "verktyg", "metod", "praxis", "implementation"],
+        keywords=["procedur", "automat", "algorit", "techni", "engineer",
+                  "program", "implement", "method", "praxis", "tool"],
+    ),
+    "brainstem": BrainRegion(
+        name="brainstem",
+        label_sv="Hjärnstam",
+        position=(0.0, -105.0, 0.0),
+        color_hex="#f14e4e",
+        description="Axiom, fundamentala konstanter, ursprungliga tillstånd",
+        domains=["axiom", "fundamental", "bas", "ursprung", "konstant",
+                 "grundprincip", "ontologi", "väsen", "existens",
+                 "kvanttillstånd", "entropi"],
+        keywords=["axiom", "fundament", "base", "origin", "constant",
+                  "ontolog", "exist", "entrop", "quantum"],
+    ),
+    "corpus_callosum": BrainRegion(
+        name="corpus_callosum",
+        label_sv="Corpus callosum",
+        position=(0.0, 0.0, 0.0),
+        color_hex="#ffffff",
+        description="Korsdomän-bryggor, META-syntes, gränsöverskridande noder",
+        domains=["korsdomän", "tvärvetenskap", "interdisciplinär",
+                 "integration", "synkronisering"],
+        keywords=["cross", "inter", "trans", "META::", "bridge", "syntes_"],
+    ),
+}
+
+# ── Domain → Region lookup ────────────────────────────────────────────────────
+
+def _build_index() -> dict[str, str]:
+    """Build a flat domain_name → region_name index."""
+    idx: dict[str, str] = {}
+    for region_name, region in BRAIN_REGIONS.items():
+        for d in region.domains:
+            idx[d.lower()] = region_name
+    return idx
+
+_DOMAIN_INDEX: dict[str, str] = _build_index()
+
+
+def classify_domain(domain: str) -> str:
+    """
+    Return the brain region name for a given domain string.
+    Falls back to keyword matching, then 'corpus_callosum' for unknown.
+    """
+    if not domain:
+        return "corpus_callosum"
+
+    d = domain.lower().strip()
+
+    # META:: prefix always → prefrontal
+    if d.startswith("meta::") or d.startswith("meta_"):
+        return "prefrontal"
+
+    # bridge / syntes nodes → hippocampus / corpus_callosum
+    if "bridge" in d or "syntes_" in d or "brygga" in d:
+        return "hippocampus"
+
+    # Exact match
+    if d in _DOMAIN_INDEX:
+        return _DOMAIN_INDEX[d]
+
+    # Keyword matching
+    for region_name, region in BRAIN_REGIONS.items():
+        for kw in region.keywords:
+            if kw in d:
+                return region_name
+
+    return "corpus_callosum"
+
+
+def get_position(domain: str) -> Tuple[float, float, float]:
+    """Return the 3D attractor position for a domain."""
+    region_name = classify_domain(domain)
+    return BRAIN_REGIONS[region_name].position
+
+
+def get_color(domain: str) -> str:
+    """Return the hex color for a domain's brain region."""
+    region_name = classify_domain(domain)
+    return BRAIN_REGIONS[region_name].color_hex
+
+
+# ── Full region map (for JS serialization) ───────────────────────────────────
+
+def regions_as_dict() -> dict:
+    """Serialize all regions for the /api/brain_regions endpoint."""
+    return {
+        name: {
+            "label": r.label_sv,
+            "position": list(r.position),
+            "color": r.color_hex,
+            "description": r.description,
+        }
+        for name, r in BRAIN_REGIONS.items()
+    }

@@ -159,3 +159,15 @@ class LearningCoordinator:
         # P4: Uppdatera granularitet
         self._update_granularity(src, support_count)
         self._update_granularity(tgt, support_count)
+
+        # Emit: kant tillagd → realtidsvisualisering
+        try:
+            from nouse.field.events import emit as _emit
+            _emit(
+                "edge_added",
+                src=src, rel=rel_type, tgt=tgt,
+                evidence_score=round(evidence_score, 3),
+                delta=round(delta, 4),
+            )
+        except Exception:
+            pass

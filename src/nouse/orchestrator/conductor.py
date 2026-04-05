@@ -35,13 +35,18 @@ Self-modification guardrail:
 from __future__ import annotations
 
 import asyncio
+import json as _json
 import logging
 import math
 import os
 import uuid
 from dataclasses import dataclass, field as dc_field
 from datetime import datetime, timezone
-from typing import Any
+from typing import TYPE_CHECKING, Any, Literal
+
+if TYPE_CHECKING:
+	from nouse.field.surface import FieldSurface
+	from nouse.learning_coordinator import LearningCoordinator
 
 from nouse.limbic.signals import (
 	LimbicState,
@@ -68,6 +73,8 @@ _AUTONOMY_ENABLED   = os.getenv("NOUSE_AUTONOMY_ENABLED", "1").strip() in {"1", 
 _AUTO_SELF_MOD      = os.getenv("NOUSE_AUTO_SELF_MOD", "0").strip() in {"1", "true", "yes"}
 _RETRIEVAL_WINDOW   = int(os.getenv("NOUSE_CONDUCTOR_WINDOW", "12"))
 _AROUSAL_DORMANT    = float(os.getenv("NOUSE_AROUSAL_DORMANT", "0.88"))
+_MAX_SYNTHESIS_DEPTH     = int(os.getenv("NOUSE_MAX_SYNTHESIS_DEPTH", "3"))
+_SYNTHESIS_SEEDS_PER_DOMAIN = int(os.getenv("NOUSE_SYNTHESIS_SEEDS", "10"))
 
 _SELF_MOD_CONFIDENCE_MIN = 0.72
 _SELF_MOD_DISCOVERY_MIN  = 4
@@ -94,7 +101,147 @@ class CycleResult:
 	workspace_winner:        str | None
 	new_relations:           int
 	self_update_proposed:    bool
+	synthesis_queued:        bool
+	cc_prediction:           str
+	cc_confidence:           float
 	ts:                      str
+
+
+# ── CCNode — Corpus Callosum: semantisk orakel-nod ───────────────────────────
+
+_CC_SYSTEM = """\
+Du är en semantisk prediktor. Du tar strukturell kontext — TDA-mönster, \
+axiom-signaturer, limbisk tillstånd — och returnerar exakt en sak: \
+den bästa semantiska prediktionen för den begärda uppgiften.
+
+Du är INTE en agent. Du fattar INGA beslut. Du resonerar INTE fritt.
+Du är ett instrument i en kognitiv arkitektur. Din output kristalliseras \
+direkt till en kunskapsgraf.
+
+Svara alltid med giltig JSON. Inget annat."""
+
+_CC_TASK_PROMPTS: dict[str, str] = {
+	"bridge": """\
+Strukturell kontext:
+{context}
+
+Uppgift: Identifiera den latenta strukturella bryggan.
+Returnera JSON: {{"prediction": "brygga i en mening", "confidence": 0.0–1.0, "why": "strukturell motivering"}}""",
+
+	"decompose": """\
+Strukturell kontext:
+{context}
+
+Uppgift: Identifiera de universella primitiver som konceptet reduceras till.
+Returnera JSON: {{"prediction": "primitiv-lista separerad med komma", "confidence": 0.0–1.0, "why": "dekompositonslogik"}}""",
+
+	"synthesize": """\
+Strukturell kontext:
+{context}
+
+Uppgift: Producera den emergenta syntesen — den tredje idén som uppstår ur kombinationen.
+Returnera JSON: {{"prediction": "synteskonceptets namn", "confidence": 0.0–1.0, "why": "varför denna syntes är strukturellt motiverad"}}""",
+}
+
+
+@dataclass
+class CCNode:
+	"""
+	Corpus Callosum — semantisk orakel-nod.
+
+	Tar strukturell kontext från alla hjärnregioner (TDA, axiom-signaturer,
+	limbisk tillstånd, episodminne) och returnerar exakt en semantisk
+	prediktion. Ingenting annat.
+
+	Modellen är utbytbar — den uppfyller ett kontrakt, inte en identitet.
+	GPT-5 idag, LLaMA-5 imorgon. Kontraktet ändras inte.
+
+	Kontraktet:
+	  INPUT:  strukturell kontext (dict) + uppgiftstyp
+	  OUTPUT: str (semantisk prediktion) + confidence float
+
+	Placering i kognitionsarkitekturen:
+	  LLM är INTE dirigenten. LLM är ett instrument.
+	  CognitiveConductor är dirigenten.
+	  CCNode är bryggan mellan strukturell beräkning och semantisk mening.
+	"""
+
+	model: str = dc_field(
+		default_factory=lambda: (
+			os.getenv("NOUSE_CC_MODEL")
+			or os.getenv("NOUSE_TEACHER_MODEL")
+			or "gpt-4o"
+		)
+	)
+	base_url: str = dc_field(
+		default_factory=lambda: os.getenv(
+			"NOUSE_TEACHER_BASE_URL",
+			"https://models.inference.ai.azure.com",
+		)
+	)
+	timeout: float = dc_field(
+		default_factory=lambda: float(os.getenv("NOUSE_CC_TIMEOUT_SEC", "30"))
+	)
+
+	async def predict(
+		self,
+		structural_context: dict,
+		task: Literal["bridge", "decompose", "synthesize"],
+	) -> tuple[str, float]:
+		"""
+		Semantisk prediktion — stateless, model-agnostic.
+
+		Returns:
+			(prediction: str, confidence: float)
+			Vid fel: ("", 0.0) — aldrig exception till anroparen.
+		"""
+		import httpx
+
+		token = os.getenv("GITHUB_TOKEN", "")
+		if not token:
+			log.warning("CCNode: GITHUB_TOKEN saknas — prediktion hoppas över")
+			return ("", 0.0)
+
+		task_template = _CC_TASK_PROMPTS.get(task)
+		if not task_template:
+			log.warning("CCNode: okänd task '%s'", task)
+			return ("", 0.0)
+
+		context_str = _json.dumps(structural_context, ensure_ascii=False, indent=2)
+		user_prompt = task_template.format(context=context_str)
+
+		try:
+			async with httpx.AsyncClient(timeout=self.timeout) as client:
+				resp = await client.post(
+					f"{self.base_url}/chat/completions",
+					headers={
+						"Authorization": f"Bearer {token}",
+						"Content-Type": "application/json",
+					},
+					json={
+						"model": self.model,
+						"messages": [
+							{"role": "system", "content": _CC_SYSTEM},
+							{"role": "user",   "content": user_prompt},
+						],
+						"temperature": 0.3,
+						"max_tokens": 400,
+						"response_format": {"type": "json_object"},
+					},
+				)
+				resp.raise_for_status()
+				raw = resp.json()["choices"][0]["message"]["content"].strip()
+				data = _json.loads(raw)
+				prediction = str(data.get("prediction", "") or "").strip()
+				confidence = float(data.get("confidence", 0.0))
+				log.debug(
+					"CCNode [%s] → '%s' (conf=%.2f)",
+					task, prediction[:60], confidence,
+				)
+				return (prediction, confidence)
+		except Exception as exc:
+			log.warning("CCNode.predict [%s] misslyckades: %s", task, exc)
+			return ("", 0.0)
 
 
 # ── Bisociation-scoring (F_bisoc) ────────────────────────────────────────────
@@ -146,10 +293,16 @@ class CognitiveConductor:
 		self,
 		memory: MemoryStore | None = None,
 		workspace: GlobalWorkspace | None = None,
+		field_surface: "FieldSurface | None" = None,
+		coordinator: "LearningCoordinator | None" = None,
+		cc_node: CCNode | None = None,
 	) -> None:
 		self.memory = memory or MemoryStore()
 		self.workspace = workspace or GlobalWorkspace()
 		self._discovery_streak: int = 0
+		self._field_surface = field_surface
+		self._coordinator = coordinator
+		self.cc = cc_node if cc_node is not None else CCNode()
 
 	async def run_cognitive_cycle(
 		self,
@@ -206,6 +359,41 @@ class CognitiveConductor:
 			except Exception as exc:
 				log.warning(f"TDA misslyckades: {exc}")
 
+		# ── Steg 3.5: CCNode — semantisk prediktion på TDA-kontext ──────────
+		# LLM som instrument: strukturell kontext in, semantisk prediktion ut.
+		# Resultatet kristalliseras till episodminnet före limbisk cykel.
+		cc_prediction = ""
+		cc_confidence = 0.0
+		if vectors and len(vectors) >= 2:
+			cc_context = {
+				"episode": episode_text[:400],
+				"domain": domain,
+				"tda": {
+					"h0_a": h0_a, "h1_a": h1_a,
+					"h0_b": h0_b, "h1_b": h1_b,
+					"topo_sim": round(topo_sim, 3),
+				},
+			}
+			cc_prediction, cc_confidence = await self.cc.predict(
+				structural_context=cc_context,
+				task="synthesize",
+			)
+			if cc_prediction and cc_confidence >= 0.4:
+				self.memory.ingest_episode(
+					text=f"[CC:synthesize] {cc_prediction}",
+					meta={
+						"domain_hint": domain,
+						"source": "cc_node",
+						"cc_confidence": cc_confidence,
+						"session_id": session_id,
+					},
+					relations=[],
+				)
+				log.info(
+					"CCNode syntes: '%s' (conf=%.2f)",
+					cc_prediction[:80], cc_confidence,
+				)
+
 		# ── Steg 4: Limbisk cykel ────────────────────────────────────────────
 		limbic = load_limbic()
 		bisoc_candidates = 1 if h1_a > 0 or h1_b > 0 else 0
@@ -260,6 +448,7 @@ class CognitiveConductor:
 
 		# ── Steg 7: Skriv syntes om bisociation ─────────────────────────────
 		new_relations = 0
+		synthesis_queued = False
 		if verdict == "BISOCIATION":
 			self._discovery_streak += 1
 			synthesis = (
@@ -279,6 +468,33 @@ class CognitiveConductor:
 				},
 				relations=[],
 			)
+
+			# ── 1+1=3+1=5: Trigger synthesis cascade ───────────────────────
+			# Bisociation-signalen startar en rekursiv syntes-kaskad:
+			# domänens toppkoncept → run_synthesis_cascade → gen0+gen1+gen2...
+			# Varje generation kombinerar synteserna från föregående generation.
+			if self._field_surface is not None and self._coordinator is not None:
+				try:
+					from nouse.field.bridge_finder import run_synthesis_cascade
+					concepts = self._field_surface.concepts(domain)
+					seed_names = [c["name"] for c in concepts[:_SYNTHESIS_SEEDS_PER_DOMAIN]]
+					if len(seed_names) >= 2:
+						asyncio.create_task(
+							run_synthesis_cascade(
+								seed_concepts=seed_names,
+								field_surface=self._field_surface,
+								coordinator=self._coordinator,
+								max_generations=_MAX_SYNTHESIS_DEPTH,
+								pairs_per_generation=3,
+							)
+						)
+						synthesis_queued = True
+						log.info(
+							"Synthesis cascade triggered: domain=%s seeds=%d depth=%d",
+							domain, len(seed_names), _MAX_SYNTHESIS_DEPTH,
+						)
+				except Exception as _exc:
+					log.warning("Synthesis cascade trigger failed: %s", _exc)
 		else:
 			self._discovery_streak = 0
 
@@ -311,6 +527,9 @@ class CognitiveConductor:
 			workspace_winner=winner_module,
 			new_relations=new_relations,
 			self_update_proposed=self_update_proposed,
+			synthesis_queued=synthesis_queued,
+			cc_prediction=cc_prediction,
+			cc_confidence=cc_confidence,
 			ts=_now_iso(),
 		)
 

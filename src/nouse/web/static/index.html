@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NoUse — FieldSurface Live</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #020814;
+      color: #c4d4f0;
+      font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+      overflow: hidden;
+      height: 100vh;
+      user-select: none;
+    }
+
+    #graph-container { position: fixed; inset: 0; }
+
+    /* ── HUD Panels ─────────────────────────────────────────── */
+    .hud {
+      position: fixed;
+      z-index: 100;
+      background: rgba(4, 14, 36, 0.82);
+      border: 1px solid rgba(78, 154, 241, 0.25);
+      border-radius: 10px;
+      backdrop-filter: blur(12px);
+      padding: 12px 14px;
+      font-size: 11px;
+      pointer-events: auto;
+    }
+
+    #hud-stats {
+      top: 14px; left: 14px;
+      min-width: 200px;
+    }
+
+    #hud-domains {
+      top: 14px; right: 14px;
+      max-width: 220px;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+
+    #hud-events {
+      bottom: 14px; left: 14px;
+      width: 380px;
+      max-height: 220px;
+      overflow: hidden;
+    }
+
+    #hud-inspector {
+      bottom: 14px; right: 14px;
+      width: 300px;
+      display: none;
+    }
+
+    #hud-controls {
+      top: 50%;
+      left: 14px;
+      transform: translateY(-50%);
+      width: 200px;
+    }
+
+    .hud-title {
+      color: #4e9af1;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 2px 0;
+      border-bottom: 1px solid rgba(78, 154, 241, 0.07);
+    }
+
+    .stat-label { color: #7a9bc4; }
+
+    .stat-value {
+      color: #e0ebff;
+      font-weight: bold;
+      transition: color 0.3s;
+    }
+
+    .stat-value.flash { color: #4ef1e8; }
+
+    /* Limbic bar */
+    .limbic-bar-wrap {
+      margin: 6px 0 2px;
+    }
+    .limbic-label { color: #7a9bc4; font-size: 10px; margin-bottom: 3px; }
+    .limbic-bar-bg {
+      height: 4px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 2px;
+    }
+    .limbic-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.8s ease;
+    }
+    .bar-arousal .limbic-bar-fill { background: linear-gradient(90deg, #4e9af1, #4ef1e8); }
+    .bar-dopamine .limbic-bar-fill { background: linear-gradient(90deg, #f16b4e, #f1c44e); }
+
+    /* Domain legend */
+    .domain-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 3px 0;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .domain-row:hover { opacity: 0.8; }
+    .domain-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 5px currentColor;
+    }
+    .domain-name { color: #c4d4f0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .domain-count { color: #5a7aaa; }
+
+    /* Event feed */
+    #event-list {
+      font-size: 10px;
+      line-height: 1.6;
+      overflow-y: auto;
+      max-height: 170px;
+    }
+
+    .event-row {
+      display: flex;
+      gap: 6px;
+      padding: 2px 0;
+      border-bottom: 1px solid rgba(78, 154, 241, 0.06);
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .ev-time { color: #3a5a8a; flex-shrink: 0; }
+    .ev-icon { flex-shrink: 0; width: 14px; text-align: center; }
+    .ev-text { color: #b0c8e8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ev-edge     .ev-icon { color: #4e9af1; }
+    .ev-synapse  .ev-icon { color: #4ef1c4; }
+    .ev-meta     .ev-icon { color: #ffd700; }
+    .ev-probe    .ev-icon { color: #b04ef1; }
+
+    /* Inspector */
+    #inspector-name {
+      color: #4ef1e8;
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 6px;
+      word-break: break-all;
+    }
+    #inspector-domain { color: #7a9bc4; margin-bottom: 8px; }
+    #inspector-rels { font-size: 10px; max-height: 200px; overflow-y: auto; }
+    .rel-row {
+      padding: 2px 0;
+      border-bottom: 1px solid rgba(78, 154, 241, 0.06);
+    }
+    .rel-type { color: #4e9af1; }
+    .rel-tgt { color: #c4d4f0; }
+    .rel-ev { color: #5a7aaa; font-size: 9px; }
+
+    /* Controls */
+    .ctrl-input {
+      width: 100%;
+      background: rgba(4, 14, 36, 0.6);
+      border: 1px solid rgba(78, 154, 241, 0.3);
+      border-radius: 4px;
+      color: #c4d4f0;
+      padding: 5px 8px;
+      font-family: inherit;
+      font-size: 11px;
+      margin-bottom: 6px;
+    }
+    .ctrl-input:focus { outline: none; border-color: #4e9af1; }
+
+    .ctrl-btn {
+      width: 100%;
+      background: rgba(78, 154, 241, 0.15);
+      border: 1px solid rgba(78, 154, 241, 0.3);
+      border-radius: 4px;
+      color: #c4d4f0;
+      padding: 5px 8px;
+      font-family: inherit;
+      font-size: 11px;
+      cursor: pointer;
+      margin-bottom: 4px;
+      transition: background 0.2s;
+    }
+    .ctrl-btn:hover { background: rgba(78, 154, 241, 0.3); }
+
+    .ctrl-sep {
+      height: 1px;
+      background: rgba(78, 154, 241, 0.12);
+      margin: 8px 0;
+    }
+
+    /* Loading overlay */
+    #loading {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: #020814;
+      z-index: 9999;
+      gap: 16px;
+    }
+    #loading-text { color: #4e9af1; font-size: 13px; letter-spacing: 2px; }
+    .loader-ring {
+      width: 48px; height: 48px;
+      border: 2px solid rgba(78, 154, 241, 0.15);
+      border-top-color: #4e9af1;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Pulse animation for new meta-axioms */
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(78,154,241,0.3); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(78,154,241,0.6); }
+
+    /* Close button */
+    .close-btn {
+      position: absolute; top: 8px; right: 10px;
+      background: none; border: none;
+      color: #5a7aaa; cursor: pointer; font-size: 14px;
+    }
+    .close-btn:hover { color: #c4d4f0; }
+
+    /* View mode toggle */
+    #hud-viewmode {
+      top: 14px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 4px; padding: 6px 8px;
+    }
+    .view-btn {
+      background: rgba(78,154,241,0.1);
+      border: 1px solid rgba(78,154,241,0.25);
+      border-radius: 4px;
+      color: #7a9bc4; cursor: pointer;
+      padding: 4px 12px; font-family: inherit; font-size: 11px;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .view-btn:hover { background: rgba(78,154,241,0.25); color: #c4d4f0; }
+    .view-btn.active {
+      background: rgba(78,154,241,0.3);
+      border-color: #4e9af1; color: #4e9af1; font-weight: bold;
+    }
+
+    /* Path animator */
+    #hud-path {
+      bottom: 250px; left: 14px; width: 380px;
+      display: none;
+    }
+    #path-result {
+      margin-top: 8px; font-size: 10px;
+      max-height: 120px; overflow-y: auto;
+    }
+    .path-hop {
+      display: flex; align-items: center; gap: 6px;
+      padding: 3px 0;
+      opacity: 0; animation: fadeIn 0.4s forwards;
+    }
+    .path-hop-node { color: #4ef1c4; }
+    .path-hop-rel  { color: #4e9af1; font-size: 9px; }
+    .path-hop-arrow { color: #5a7aaa; }
+  </style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="loader-ring"></div>
+  <div id="loading-text">INITIALIZING FIELD SURFACE...</div>
+</div>
+
+<!-- View mode toggle -->
+<div class="hud" id="hud-viewmode">
+  <button class="view-btn active" id="btn-concept"  onclick="setView('concept')">◉ Konceptvy</button>
+  <button class="view-btn"        id="btn-domain"   onclick="setView('domain')">⬡ Domänvy</button>
+  <button class="view-btn"        id="btn-ripple"   onclick="setView('ripple')">◎ Hopp-ripple</button>
+  <button class="view-btn"        id="btn-path"     onclick="setView('path')">⟿ Sök väg</button>
+</div>
+
+<!-- Graph container -->
+<div id="graph-container"></div>
+
+<!-- Stats HUD -->
+<div class="hud" id="hud-stats">
+  <div class="hud-title">◈ NoUse Field</div>
+  <div class="stat-row">
+    <span class="stat-label">Noder</span>
+    <span class="stat-value" id="st-concepts">—</span>
+  </div>
+  <div class="stat-row">
+    <span class="stat-label">Kanter</span>
+    <span class="stat-value" id="st-relations">—</span>
+  </div>
+  <div class="stat-row">
+    <span class="stat-label">Domäner</span>
+    <span class="stat-value" id="st-domains">—</span>
+  </div>
+  <div class="stat-row">
+    <span class="stat-label">Cykel</span>
+    <span class="stat-value" id="st-cycle">—</span>
+  </div>
+  <div class="stat-row">
+    <span class="stat-label">Synapser/min</span>
+    <span class="stat-value" id="st-synapses">0</span>
+  </div>
+
+  <div style="margin-top:10px">
+    <div class="limbic-bar-wrap">
+      <div class="limbic-label">Arousal</div>
+      <div class="limbic-bar-bg bar-arousal">
+        <div class="limbic-bar-fill" id="bar-arousal" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="limbic-bar-wrap">
+      <div class="limbic-label">Dopamine</div>
+      <div class="limbic-bar-bg bar-dopamine">
+        <div class="limbic-bar-fill" id="bar-dopamine" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:10px; font-size:10px; color: #3a5a7a;">
+    <span id="sse-status">● offline</span>
+  </div>
+</div>
+
+<!-- Domain legend -->
+<div class="hud" id="hud-domains">
+  <div class="hud-title">Domäner</div>
+  <div id="domain-list"></div>
+</div>
+
+<!-- Controls -->
+<div class="hud" id="hud-controls">
+  <div class="hud-title">Sök</div>
+  <input id="search-input" class="ctrl-input" type="text" placeholder="Sök nod..." />
+  <button class="ctrl-btn" onclick="focusNode()">Fokusera</button>
+  <div class="ctrl-sep"></div>
+  <button class="ctrl-btn" onclick="resetCamera()">Återställ vy</button>
+  <button class="ctrl-btn" onclick="togglePhysics()">Fysik av/på</button>
+  <button class="ctrl-btn" onclick="toggleLabels()">Etiketter av/på</button>
+  <div class="ctrl-sep"></div>
+  <div style="font-size:10px; color:#5a7aaa; margin-bottom:4px">Filterera domän</div>
+  <select id="domain-filter" class="ctrl-input" onchange="filterDomain()">
+    <option value="">Alla domäner</option>
+  </select>
+</div>
+
+<!-- Live event feed -->
+<div class="hud" id="hud-events">
+  <div class="hud-title">⚡ Live Events</div>
+  <div id="event-list"></div>
+</div>
+
+<!-- Node inspector (shown on click) -->
+<div class="hud" id="hud-inspector">
+  <button class="close-btn" onclick="closeInspector()">✕</button>
+  <div id="inspector-name">—</div>
+  <div id="inspector-domain">—</div>
+  <div id="inspector-rels"></div>
+</div>
+
+
+<!-- 3D Force Graph via CDN -->
+<script src="https://unpkg.com/three@0.155.0/build/three.min.js"></script>
+<script src="https://unpkg.com/3d-force-graph@1.73.3/dist/3d-force-graph.min.js"></script>
+
+<script>
+'use strict';
+
+// ── Domänfärgpalett ────────────────────────────────────────────
+const PALETTE = [
+  '#4e9af1','#4ef1c4','#f16b4e','#f1c44e','#b04ef1',
+  '#4ef160','#f14eb0','#8af14e','#4ef1e8','#f14e4e',
+  '#f1a04e','#a04ef1','#4e4ef1','#f1f14e','#4e9af1',
+];
+const domainColors = {};
+let domainColorIdx = 0;
+
+function domainColor(domain) {
+  if (!domain) return '#6a8aaa';
+  if (domain.startsWith('META')) return '#ffd700';
+  if (!domainColors[domain]) {
+    domainColors[domain] = PALETTE[domainColorIdx % PALETTE.length];
+    domainColorIdx++;
+  }
+  return domainColors[domain];
+}
+
+// ── State ──────────────────────────────────────────────────────
+let Graph;
+let graphData = { nodes: [], links: [] };
+let physicsEnabled = true;
+let labelsEnabled = true;
+let activeDomain = '';
+let synapseCount = 0;
+let synapseWindow = [];
+const MAX_EVENTS = 120;
+
+// ── Init graph ────────────────────────────────────────────────
+function initGraph(initialData) {
+  const container = document.getElementById('graph-container');
+
+  Graph = ForceGraph3D({ controlType: 'trackball' })(container)
+    .backgroundColor('#020814')
+    .width(window.innerWidth)
+    .height(window.innerHeight)
+    // NODE rendering
+    .nodeId('id')
+    .nodeLabel(node => `<div style="font-family:monospace;font-size:11px;
+      background:rgba(4,14,36,0.9);padding:4px 8px;border-radius:4px;
+      border:1px solid rgba(78,154,241,0.3);color:#c4d4f0">
+      <b style="color:${domainColor(node.group)}">${node.id}</b><br>
+      <span style="color:#5a7aaa">${node.group || 'unknown'}</span><br>
+      ev: ${(node.evidence || 0).toFixed(2)}
+    </div>`)
+    .nodeColor(node => {
+      if (node.isMeta) return '#ffd700';
+      if (node._new) return '#ffffff';
+      return domainColor(node.group);
+    })
+    .nodeVal(node => {
+      if (node.isMeta) return 8;
+      return Math.max(1, Math.min(12, (node._degree || 1) * 0.8));
+    })
+    .nodeOpacity(0.92)
+    // Glow spheres via custom Three.js objects
+    .nodeThreeObject(node => {
+      const isMeta = node.isMeta;
+      const size = isMeta ? 7 : Math.max(3, Math.min(10, (node._degree || 1) * 0.6 + 3));
+      const color = isMeta ? 0xffd700 : parseInt(domainColor(node.group).replace('#',''), 16);
+
+      const geo = isMeta
+        ? new THREE.OctahedronGeometry(size, 0)
+        : new THREE.SphereGeometry(size, 10, 8);
+
+      const mat = new THREE.MeshLambertMaterial({
+        color,
+        transparent: true,
+        opacity: node._new ? 1.0 : (isMeta ? 0.95 : 0.82),
+      });
+
+      const mesh = new THREE.Mesh(geo, mat);
+
+      // Glow ring for meta-axioms
+      if (isMeta) {
+        const ringGeo = new THREE.RingGeometry(size + 1, size + 3, 16);
+        const ringMat = new THREE.MeshBasicMaterial({
+          color: 0xffd700, side: THREE.DoubleSide,
+          transparent: true, opacity: 0.5,
+        });
+        mesh.add(new THREE.Mesh(ringGeo, ringMat));
+      }
+
+      // Label sprite
+      if (labelsEnabled) {
+        const sprite = makeLabel(node.id, isMeta ? '#ffd700' : domainColor(node.group));
+        sprite.position.set(0, size + 4, 0);
+        mesh.add(sprite);
+      }
+
+      node._mesh = mesh;
+      return mesh;
+    })
+    .nodeThreeObjectExtend(false)
+    // LINK rendering
+    .linkSource('source')
+    .linkTarget('target')
+    .linkLabel(link => {
+      const l = link.label || link.rel || '';
+      const ev = (link.evidence_score || 0).toFixed(2);
+      return `<span style="font-family:monospace;font-size:10px;color:#7a9bc4">${l} (ev=${ev})</span>`;
+    })
+    .linkColor(link => {
+      const t = link.label || link.rel || '';
+      if (t.includes('isomorf')) return '#4ef1c4';
+      if (t.includes('meta') || t.includes('convergerar')) return '#ffd700';
+      if (t.includes('primitiv')) return 'rgba(200,220,255,0.5)';
+      return `rgba(78,154,241,${Math.max(0.15, Math.min(0.7, link.evidence_score || 0.3))})`;
+    })
+    .linkWidth(link => {
+      if (link._hot) return 2.5;
+      return Math.max(0.3, Math.min(2, (link.evidence_score || 0.3) * 1.5));
+    })
+    .linkOpacity(0.6)
+    .linkDirectionalParticles(link => {
+      if (link._particles > 0) return link._particles;
+      if ((link.label || '').includes('isomorf')) return 2;
+      if ((link.label || '').includes('convergerar')) return 3;
+      return 0;
+    })
+    .linkDirectionalParticleSpeed(0.005)
+    .linkDirectionalParticleWidth(link => link._hot ? 2.5 : 1.5)
+    .linkDirectionalParticleColor(link => {
+      if ((link.label || '').includes('convergerar')) return '#ffd700';
+      return '#4ef1c4';
+    })
+    // Interaction
+    .onNodeClick(node => showInspector(node))
+    .onBackgroundClick(() => closeInspector());
+
+  // Ambient + directional light
+  const scene = Graph.scene();
+  scene.add(new THREE.AmbientLight(0x404070, 2.5));
+  const dir = new THREE.DirectionalLight(0x8ab4f8, 1.5);
+  dir.position.set(100, 200, 100);
+  scene.add(dir);
+
+  // Load data
+  setGraphData(initialData.nodes, initialData.edges);
+  updateStats(initialData.stats || {});
+  buildDomainLegend();
+
+  window.addEventListener('resize', () => {
+    Graph.width(window.innerWidth).height(window.innerHeight);
+  });
+
+  document.getElementById('loading').style.display = 'none';
+}
+
+// ── Label sprite ──────────────────────────────────────────────
+function makeLabel(text, color = '#c4d4f0') {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256; canvas.height = 40;
+  const ctx = canvas.getContext('2d');
+  ctx.font = 'bold 22px monospace';
+  ctx.fillStyle = color;
+  ctx.textAlign = 'center';
+  ctx.fillText(text.slice(0, 24), 128, 28);
+  const tex = new THREE.CanvasTexture(canvas);
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.85 });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(20, 8, 1);
+  return sprite;
+}
+
+// ── Set / update graph data ────────────────────────────────────
+function setGraphData(nodes, edges) {
+  // Compute degree for node sizing
+  const degree = {};
+  (edges || []).forEach(e => {
+    const s = e.from || e.source;
+    const t = e.to || e.target;
+    if (s) degree[s] = (degree[s] || 0) + 1;
+    if (t) degree[t] = (degree[t] || 0) + 1;
+  });
+
+  const gNodes = (nodes || []).map(n => ({
+    ...n,
+    isMeta: (n.id || '').startsWith('META::'),
+    _degree: degree[n.id] || 0,
+  }));
+
+  const gLinks = (edges || []).map(e => ({
+    ...e,
+    source: e.from || e.source,
+    target: e.to || e.target,
+    _particles: 0,
+    _hot: false,
+  }));
+
+  graphData = { nodes: gNodes, links: gLinks };
+  Graph.graphData(graphData);
+}
+
+// ── Add single node at runtime ─────────────────────────────────
+function addNode(id, domain, source) {
+  if (graphData.nodes.find(n => n.id === id)) return;
+  const node = {
+    id, label: id, group: domain || 'unknown', source,
+    isMeta: id.startsWith('META::'),
+    _degree: 0, _new: true,
+  };
+  graphData.nodes.push(node);
+  Graph.graphData(graphData);
+  // Fade _new flag after 3s
+  setTimeout(() => { node._new = false; }, 3000);
+}
+
+// ── Add single edge at runtime ─────────────────────────────────
+function addEdge(src, tgt, rel, evidenceScore, hot = false) {
+  const exists = graphData.links.find(
+    l => l.source === src && l.target === tgt && l.label === rel
+  );
+  if (exists) {
+    exists.evidence_score = evidenceScore;
+    exists._hot = hot;
+    if (hot) {
+      exists._particles = 6;
+      setTimeout(() => { exists._particles = 1; exists._hot = false; }, 4000);
+    }
+    Graph.graphData(graphData);
+    return;
+  }
+
+  // Ensure nodes exist
+  if (!graphData.nodes.find(n => n.id === src)) addNode(src, null, 'live');
+  if (!graphData.nodes.find(n => n.id === tgt)) addNode(tgt, null, 'live');
+
+  const link = {
+    id: `${src}::${rel}::${tgt}`,
+    source: src, target: tgt,
+    label: rel, rel,
+    evidence_score: evidenceScore || 0.3,
+    _particles: hot ? 6 : 0,
+    _hot: hot,
+    from: src, to: tgt,
+  };
+  graphData.links.push(link);
+  if (hot) {
+    setTimeout(() => { link._particles = 0; link._hot = false; }, 4000);
+  }
+  Graph.graphData(graphData);
+
+  // Update degrees
+  const s = graphData.nodes.find(n => n.id === src);
+  const t = graphData.nodes.find(n => n.id === tgt);
+  if (s) s._degree = (s._degree || 0) + 1;
+  if (t) t._degree = (t._degree || 0) + 1;
+}
+
+// ── Growth probe: flash source node ───────────────────────────
+function animateProbe(axiom) {
+  const node = graphData.nodes.find(n => n.id === axiom);
+  if (!node || !node._mesh) return;
+  const mat = node._mesh.material;
+  const origColor = mat.color.getHex();
+  mat.color.setHex(0xb04ef1);
+  mat.opacity = 1.0;
+  setTimeout(() => {
+    mat.color.setHex(origColor);
+    mat.opacity = 0.82;
+  }, 1200);
+}
+
+// ── Stats update ──────────────────────────────────────────────
+function flashStat(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('flash');
+  setTimeout(() => el.classList.remove('flash'), 600);
+}
+
+function updateStats(stats) {
+  if (stats.concepts !== undefined) {
+    const el = document.getElementById('st-concepts');
+    if (el && el.textContent !== String(stats.concepts)) {
+      el.textContent = stats.concepts;
+      flashStat('st-concepts');
+    }
+  }
+  if (stats.relations !== undefined) {
+    const el = document.getElementById('st-relations');
+    if (el && el.textContent !== String(stats.relations)) {
+      el.textContent = stats.relations;
+      flashStat('st-relations');
+    }
+  }
+  if (stats.domains !== undefined) {
+    const el = document.getElementById('st-domains');
+    if (el) el.textContent = Array.isArray(stats.domains) ? stats.domains.length : stats.domains;
+  }
+  if (stats.cycle !== undefined) {
+    const el = document.getElementById('st-cycle');
+    if (el) el.textContent = stats.cycle;
+  }
+  if (stats.arousal !== undefined) {
+    const bar = document.getElementById('bar-arousal');
+    if (bar) bar.style.width = Math.round(stats.arousal * 100) + '%';
+  }
+  if (stats.dopamine !== undefined) {
+    const bar = document.getElementById('bar-dopamine');
+    if (bar) bar.style.width = Math.round(stats.dopamine * 100) + '%';
+  }
+}
+
+// ── Synapses/min counter ───────────────────────────────────────
+function recordSynapse() {
+  const now = Date.now();
+  synapseWindow.push(now);
+  synapseWindow = synapseWindow.filter(t => now - t < 60000);
+  const el = document.getElementById('st-synapses');
+  if (el) el.textContent = synapseWindow.length;
+}
+
+// ── Domain legend ─────────────────────────────────────────────
+function buildDomainLegend() {
+  const list = document.getElementById('domain-list');
+  const filter = document.getElementById('domain-filter');
+  if (!list || !filter) return;
+
+  const counts = {};
+  graphData.nodes.forEach(n => {
+    const d = n.group || 'unknown';
+    counts[d] = (counts[d] || 0) + 1;
+  });
+
+  const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+  list.innerHTML = sorted.map(([dom, cnt]) => `
+    <div class="domain-row" onclick="filterDomainByName('${dom}')">
+      <div class="domain-dot" style="background:${domainColor(dom)}"></div>
+      <span class="domain-name">${dom}</span>
+      <span class="domain-count">${cnt}</span>
+    </div>
+  `).join('');
+
+  const domainOptions = sorted
+    .map(([d]) => `<option value="${d}">${d}</option>`)
+    .join('');
+  filter.innerHTML = '<option value="">Alla domäner</option>' + domainOptions;
+}
+
+// ── Event feed ────────────────────────────────────────────────
+function pushEventRow(type, icon, className, text) {
+  const list = document.getElementById('event-list');
+  if (!list) return;
+
+  const now = new Date();
+  const ts = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+
+  const row = document.createElement('div');
+  row.className = `event-row ev-${className}`;
+  row.innerHTML = `
+    <span class="ev-time">${ts}</span>
+    <span class="ev-icon">${icon}</span>
+    <span class="ev-text">${text}</span>
+  `;
+
+  list.insertBefore(row, list.firstChild);
+
+  // Trim old events
+  while (list.children.length > MAX_EVENTS) {
+    list.removeChild(list.lastChild);
+  }
+}
+
+// ── SSE listener ──────────────────────────────────────────────
+function connectSSE() {
+  const sse = new EventSource('/api/events');
+  const statusEl = document.getElementById('sse-status');
+
+  sse.onopen = () => {
+    if (statusEl) {
+      statusEl.style.color = '#4ef160';
+      statusEl.textContent = '● live';
+    }
+  };
+
+  sse.onmessage = (ev) => {
+    let data;
+    try { data = JSON.parse(ev.data); }
+    catch { return; }
+
+    switch (data.type) {
+
+      case 'heartbeat':
+        updateStats(data);
+        break;
+
+      case 'edge_added': {
+        addEdge(data.src, data.tgt, data.rel, data.evidence_score, false);
+        pushEventRow('edge', '→', 'edge',
+          `${data.src} → ${data.rel} → ${data.tgt} (ev=${(data.evidence_score||0).toFixed(2)})`
+        );
+        break;
+      }
+
+      case 'growth_probe': {
+        animateProbe(data.axiom);
+        pushEventRow('probe', '◎', 'probe',
+          `growth cone: ${data.axiom} [${data.domain}] skannar ${data.candidates} kandidater`
+        );
+        break;
+      }
+
+      case 'synapse_formed': {
+        addEdge(data.src, data.tgt, 'är_strukturellt_isomorf_med', data.score, true);
+        recordSynapse();
+        pushEventRow('synapse', '⚡', 'synapse',
+          `synaps: ${data.src} ↔ ${data.tgt} (${(data.score||0).toFixed(3)}) [${data.domain_src}↔${data.domain_tgt}]`
+        );
+        break;
+      }
+
+      case 'meta_axiom': {
+        addNode(data.name, 'meta', 'axon_growth_cone');
+        addEdge(data.src, data.name, 'convergerar_i', data.score, true);
+        addEdge(data.tgt, data.name, 'convergerar_i', data.score, true);
+        buildDomainLegend();
+        pushEventRow('meta', '✦', 'meta',
+          `META-AXIOM: ${data.name} ← ${data.src} + ${data.tgt}`
+        );
+        break;
+      }
+
+      case 'node_added': {
+        addNode(data.id, data.domain, data.source);
+        break;
+      }
+    }
+  };
+
+  sse.onerror = () => {
+    if (statusEl) {
+      statusEl.style.color = '#f16b4e';
+      statusEl.textContent = '● försöker igen...';
+    }
+    sse.close();
+    // Återanslut efter 5s
+    setTimeout(connectSSE, 5000);
+  };
+}
+
+// ── Node inspector ────────────────────────────────────────────
+async function showInspector(node) {
+  document.getElementById('inspector-name').textContent = node.id;
+  document.getElementById('inspector-domain').textContent =
+    `domän: ${node.group || 'okänd'} · grad: ${node._degree || 0}`;
+  document.getElementById('inspector-rels').innerHTML =
+    '<div style="color:#5a7aaa;font-size:10px">Laddar relationer...</div>';
+  document.getElementById('hud-inspector').style.display = 'block';
+
+  try {
+    const resp = await fetch(`/api/graph/focus?node_id=${encodeURIComponent(node.id)}&hops=1&limit=200`);
+    const data = await resp.json();
+    const edges = (data.edges || []).filter(
+      e => e.from === node.id || e.to === node.id
+    );
+
+    if (!edges.length) {
+      document.getElementById('inspector-rels').innerHTML =
+        '<div style="color:#5a7aaa;font-size:10px">Inga relationer.</div>';
+      return;
+    }
+
+    document.getElementById('inspector-rels').innerHTML = edges.slice(0, 30).map(e => {
+      const isOut = e.from === node.id;
+      const other = isOut ? e.to : e.from;
+      const arrow = isOut ? '→' : '←';
+      const ev = (e.evidence_score || 0).toFixed(2);
+      return `<div class="rel-row">
+        <span class="rel-type">${arrow} ${e.label || e.rel || '?'}</span>
+        <span class="rel-tgt"> ${other}</span>
+        <span class="rel-ev"> ev=${ev}</span>
+      </div>`;
+    }).join('');
+  } catch {
+    document.getElementById('inspector-rels').innerHTML =
+      '<div style="color:#f16b4e;font-size:10px">Fel vid hämtning.</div>';
+  }
+}
+
+function closeInspector() {
+  document.getElementById('hud-inspector').style.display = 'none';
+}
+
+// ── Controls ──────────────────────────────────────────────────
+function focusNode() {
+  const q = document.getElementById('search-input').value.trim().toLowerCase();
+  if (!q || !Graph) return;
+  const node = graphData.nodes.find(n =>
+    (n.id || '').toLowerCase() === q ||
+    (n.id || '').toLowerCase().includes(q)
+  );
+  if (!node) return;
+  Graph.centerAt(
+    node.x, node.y, node.z, 1200
+  );
+  Graph.zoom(3.5, 1200);
+  showInspector(node);
+}
+
+function resetCamera() {
+  if (Graph) Graph.zoomToFit(800);
+}
+
+function togglePhysics() {
+  physicsEnabled = !physicsEnabled;
+  if (Graph) Graph.d3Force('charge', physicsEnabled ? null : () => null);
+  // Simple toggle via re-init of physics
+  if (Graph) {
+    if (physicsEnabled) {
+      Graph.d3ReheatSimulation();
+    } else {
+      // Stop simulation
+      Graph.pauseAnimation();
+      Graph.resumeAnimation();
+    }
+  }
+}
+
+function toggleLabels() {
+  labelsEnabled = !labelsEnabled;
+  // Re-render nodes to toggle labels
+  if (Graph) {
+    Graph.nodeThreeObject(Graph.nodeThreeObject());
+  }
+}
+
+function filterDomain() {
+  const sel = document.getElementById('domain-filter').value;
+  filterDomainByName(sel);
+}
+
+function filterDomainByName(domain) {
+  activeDomain = domain;
+  if (!domain) {
+    // Show all
+    graphData.nodes.forEach(n => n.hidden = false);
+  } else {
+    graphData.nodes.forEach(n => { n.hidden = n.group !== domain && !n.isMeta; });
+  }
+  Graph.graphData(graphData);
+}
+
+// ── Bootstrap ─────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  const loadingText = document.getElementById('loading-text');
+
+  try {
+    loadingText.textContent = 'LOADING FIELD SURFACE...';
+    const resp = await fetch('/api/graph?limit=1500&edge_limit=4000');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    loadingText.textContent = `RENDERING ${(data.nodes || []).length} NODES...`;
+    await new Promise(r => setTimeout(r, 50));
+
+    initGraph(data);
+    buildDomainLegend();
+
+    // Connect SSE
+    connectSSE();
+
+    // Keyboard shortcut: Enter = focus node
+    document.getElementById('search-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') focusNode();
+    });
+
+    // Initial fit
+    setTimeout(() => {
+      if (Graph) Graph.zoomToFit(800, 50);
+    }, 2500);
+
+  } catch (err) {
+    loadingText.textContent = `FEL: ${err.message}`;
+    loadingText.style.color = '#f16b4e';
+    console.error('Init failed:', err);
+  }
+});
+</script>
+</body>
+</html>

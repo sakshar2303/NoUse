@@ -332,6 +332,36 @@ async def run_night_consolidation(
         except Exception as e:
             _log.warning("NightRun Ghost Q misslyckades: %s", e)
 
+    # ── Steg 11 — Rekursiv Epistemisk Nedbrytning (mycel-axiom) ──────────────
+    # Bearbeta inkubationskön (F_bisoc^τ) + kör en nedbrytningsburst
+    # om det finns tid och rätt arousal.
+    try:
+        from nouse.daemon.decomposition import (
+            process_incubation_queue,
+            promote_axioms_to_graph,
+            run_decomposition_burst,
+        )
+        from nouse.limbic.signals import load_state as _load_limbic
+
+        limbic_state = _load_limbic()
+
+        # Bearbeta inkubationskön
+        matured_axioms = process_incubation_queue(field, limbic_state.cycle)
+        if matured_axioms:
+            n_matured = promote_axioms_to_graph(field, matured_axioms)
+            _log.info("NightRun [11a] Inkubation: %d axiom mognat → %d kanter", len(matured_axioms), n_matured)
+            result.axioms_committed += n_matured
+
+        # Kör nedbrytningsburst om det finns tid kvar
+        remaining_min = (config.max_runtime_minutes * 60 - (time.monotonic() - t0)) / 60
+        if remaining_min > 3:
+            n_new = await run_decomposition_burst(field, limbic_state)
+            if n_new > 0:
+                _log.info("NightRun [11b] Decomposition: %d nya axiom-kanter", n_new)
+                result.axioms_committed += n_new
+    except Exception as e:
+        _log.warning("NightRun Decomposition misslyckades: %s", e)
+
     result.duration = round(time.monotonic() - t0, 2)
     _log.info(
         "NightRun klar: konsoliderat=%d kasserat=%d bisociationer=%d pruning=%d "

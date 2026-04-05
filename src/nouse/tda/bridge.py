@@ -78,6 +78,87 @@ def is_rust_active() -> bool:
     return _RUST_AVAILABLE
 
 
+def identify_knowledge_gaps(
+    field: Any,
+    domain: str,
+    max_gaps: int = 10,
+    min_degree: int = 2,
+) -> list[tuple[str, str, float]]:
+    """
+    Identifierar kunskapsluckor i en domän.
+
+    H1-cykler i persistenshomologi representerar konceptpar som är
+    indirekt kopplade (via grannar) men saknar direkt relation — dvs.
+    topologiska hål i kunskapsstrukturen.
+
+    Approximation (utan fullständig persistent homologi):
+      1. Bygg grannskapsgraf från domänkoncepten
+      2. Hitta par (A, B) som delar EN gemensam granne men har INGEN direkt kant
+      3. Ranka efter gap_score = (delat_grannskap / max_grannskap) × (1 - direkt_evidens)
+
+    Args:
+        field:      FieldSurface-instans
+        domain:     Domän att analysera
+        max_gaps:   Max antal gap-par att returnera
+        min_degree: Minimalt antal relationer en nod behöver för att räknas
+
+    Returns:
+        Lista av (src, tgt, gap_score) sorterad efter gap_score descending.
+        gap_score ∈ [0, 1]: hög = starkt strukturellt motiverat att undersöka
+    """
+    try:
+        concepts = field.concepts(domain=domain)
+    except Exception:
+        return []
+
+    if len(concepts) < 3:
+        return []
+
+    # Bygg adjacency: {concept_name: set(grannar)}
+    adjacency: dict[str, set[str]] = {}
+    for c in concepts:
+        name = c["name"] if isinstance(c, dict) else str(c)
+        adjacency[name] = set()
+
+    # Fyll grannar från befintliga relationer
+    try:
+        for c in concepts:
+            name = c["name"] if isinstance(c, dict) else str(c)
+            rels = field.relations(src=name, domain=domain)
+            for r in rels:
+                tgt = r.get("target") or r.get("tgt") or ""
+                if tgt and tgt in adjacency:
+                    adjacency[name].add(tgt)
+                    adjacency[tgt].add(name)
+    except Exception:
+        return []
+
+    # Filtrera noder med för få relationer
+    active = {n for n, nbrs in adjacency.items() if len(nbrs) >= min_degree}
+    if len(active) < 2:
+        return []
+
+    gaps: list[tuple[str, str, float]] = []
+    active_list = sorted(active)
+
+    for i, a in enumerate(active_list):
+        for b in active_list[i + 1:]:
+            if b in adjacency[a]:
+                continue  # direkt koppling finns redan
+
+            # Delat grannskap
+            shared = adjacency[a] & adjacency[b]
+            if not shared:
+                continue  # inte ens indirekt kopplade
+
+            max_degree = max(len(adjacency[a]), len(adjacency[b]))
+            gap_score = len(shared) / max(1, max_degree)
+            gaps.append((a, b, round(gap_score, 3)))
+
+    gaps.sort(key=lambda x: x[2], reverse=True)
+    return gaps[:max_gaps]
+
+
 # ── Python-fallback ──────────────────────────────────────────────────────────
 
 def _py_distance_matrix(embeddings: list[list[float]]) -> list[list[float]]:

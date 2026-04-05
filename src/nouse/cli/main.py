@@ -93,35 +93,129 @@ def _edge_assumptions(step: dict) -> list[str]:
 
 
 def _print_front_door() -> None:
+    try:
+        version = _meta.version("nouse")
+    except _meta.PackageNotFoundError:
+        version = "?"
+
     console.print(
         Panel(
-            "[bold cyan]Nouse Front Door[/bold cyan]\n"
-            "En väg in. Tre lägen utifrån hur du vill arbeta just nu.",
+            f"[bold cyan]νοῦς  v{version}[/bold cyan]\n"
+            "Epistemic grounding substrate for LLMs",
             border_style="cyan",
         )
     )
-    table = Table(show_header=True, header_style="bold")
-    table.add_column("Mode", style="cyan", no_wrap=True)
-    table.add_column("Startkommando", style="green", no_wrap=True)
-    table.add_column("När du använder det")
-    table.add_row(
-        "Me",
-        "nouse start me",
-        "Direkt samtal med hjärnan i din session (operatorfokus).",
-    )
-    table.add_row(
-        "Research",
-        "nouse start research",
-        "Dashboard och research-observabilitet (scorecard, traces, metrics).",
-    )
-    table.add_row(
-        "Autonomy",
-        "nouse start autonomy",
-        "Ingress/autonomi-läge (Clawbot, system-events, wake-signaler).",
-    )
-    console.print(table)
+
+    # ── Start modes ──
+    t = Table(show_header=True, header_style="bold", title="🚀 Start", title_style="bold cyan")
+    t.add_column("Command", style="green", no_wrap=True)
+    t.add_column("Description")
+    t.add_row("nouse start me", "Direkt samtal med hjärnan (operatörsfokus)")
+    t.add_row("nouse start research", "Dashboard + observabilitet (scorecard, traces, metrics)")
+    t.add_row("nouse start autonomy", "Ingress/autonomi-läge (Clawbot, system-events, wake)")
+    t.add_row("nouse daemon start|web|status", "Brain loop — lyssnar på alla källor, uppdaterar grafen")
+    t.add_row("nouse web", "Realtids-dashboard (startar även daemon)")
+    console.print(t)
+
+    # ── Conversation ──
+    t = Table(show_header=True, header_style="bold", title="💬 Konversation", title_style="bold cyan")
+    t.add_column("Command", style="green", no_wrap=True)
+    t.add_column("Description")
+    t.add_row("nouse chat  / i", "Agent-chat med tool-calling + grafväxt")
+    t.add_row("nouse run", "LLM-agnostisk REPL (Ollama, Claude, OpenAI, Copilot)")
+    t.add_row("nouse ask \"fråga\"", "Snabb one-shot fråga")
+    t.add_row("nouse snabbchat", "Lättviktig read-only chat")
+    t.add_row("nouse companion", "Samtalsläge — idéutbyte och relationsbyggande")
+    console.print(t)
+
+    # ── Knowledge & Learning ──
+    t = Table(show_header=True, header_style="bold", title="📚 Kunskap & Inlärning", title_style="bold cyan")
+    t.add_column("Command", style="green", no_wrap=True)
+    t.add_column("Description")
+    t.add_row("nouse ingest", "Mata in fil eller text direkt i grafen")
+    t.add_row("nouse learn-from", "Lär från YouTube, webb, PDF eller lokal fil/katalog")
+    t.add_row("nouse scan-disk", "Kartlägg disk → rankat ingest-förslag")
+    t.add_row("nouse enrich-nodes", "Berika noder som saknar kontext (LLM-genererat)")
+    t.add_row("nouse enrich", "Berika isolerade noder via frontier LLM")
+    t.add_row("nouse knowledge-backfill", "Fyll saknade nodprofiler (kontext + fakta)")
+    t.add_row("nouse deepdive", "Axiom-discovery: djupanalys av noder i grafen")
+    t.add_row("nouse consolidation-run", "Manuell konsolidering episodiskt → semantiskt minne")
+    t.add_row("nouse nightrun", "NightRun — konsolidering av arbetsminne till FieldSurface")
+    console.print(t)
+
+    # ── Exploration & Discovery ──
+    t = Table(show_header=True, header_style="bold", title="🔍 Utforskning & Upptäckt", title_style="bold cyan")
+    t.add_column("Command", style="green", no_wrap=True)
+    t.add_column("Description")
+    t.add_row("nouse nerv", "Kortaste nervbana mellan två domäner")
+    t.add_row("nouse trace", "Resoneringskedja mellan koncept/domäner")
+    t.add_row("nouse bisoc", "Bisociationskandidater via TDA (topologisk analys)")
+    t.add_row("nouse bridge", "Latenta strukturella bryggor mellan koncept")
+    t.add_row("nouse cascade", "Kompounderad idésyntes: 1+1=3+1=5+1=9...")
+    t.add_row("nouse embed-search", "Semantisk sökning i lokal embedding-index")
+    t.add_row("nouse embed-index", "Bygg/utöka lokal embedding-index")
+    t.add_row("nouse eval-embed", "Snabb hit@k-eval på embedding-index")
+    t.add_row("nouse visualize", "Interaktiv HTML-graf av kunskapsgrafen")
+    console.print(t)
+
+    # ── Brain State & Diagnostics ──
+    t = Table(show_header=True, header_style="bold", title="🧠 Hjärnstatus & Diagnostik", title_style="bold cyan")
+    t.add_column("Command", style="green", no_wrap=True)
+    t.add_column("Description")
+    t.add_row("nouse brain state|health|gap|metrics|live", "Direkt insyn i brain-db-core")
+    t.add_row("nouse limbic", "Limbiskt tillstånd (DA/NA/ACh/λ/arousal)")
+    t.add_row("nouse snapshot", "Forsknings-dump av hela hjärnans tillstånd")
+    t.add_row("nouse memory-audit", "Status för episodiskt/semantiskt minne")
+    t.add_row("nouse knowledge-audit", "Kontrollera att noder har kontext + fakta")
+    t.add_row("nouse doctor", "Driftdiagnostik + säkra auto-fixar")
+    t.add_row("nouse output-trace", "Output-trace (fråga → angrepp → verktyg → svar)")
+    t.add_row("nouse trace-probe", "Kör problemset och verifiera tracekedjan")
+    console.print(t)
+
+    # ── Autonomy & Research ──
+    t = Table(show_header=True, header_style="bold", title="🤖 Autonomi & Forskning", title_style="bold cyan")
+    t.add_column("Command", style="green", no_wrap=True)
+    t.add_column("Description")
+    t.add_row("nouse autonomous", "Autonomt läge — upptäck och lägg till ny kunskap")
+    t.add_row("nouse kickstart", "Seeda agent/subagent-tasks + väck autonom loop")
+    t.add_row("nouse research-queue", "Inspektera/kör gap-baserad research-queue")
+    t.add_row("nouse mission", "Global mission för autonom riktning + mätning")
+    t.add_row("nouse hitl", "HITL-interrupts (pause/approve/reject)")
+    t.add_row("nouse wake", "Wake/system-events (autonom triggerbuss)")
+    console.print(t)
+
+    # ── Identity & Self ──
+    t = Table(show_header=True, header_style="bold", title="🪞 Identitet & Self", title_style="bold cyan")
+    t.add_column("Command", style="green", no_wrap=True)
+    t.add_column("Description")
+    t.add_row("nouse self", "Kontinuerlig identitet + minnen + drivkrafter")
+    t.add_row("nouse journal", "Daglig journal (självutveckling + öppna frågor)")
+    console.print(t)
+
+    # ── Integration & Ingress ──
+    t = Table(show_header=True, header_style="bold", title="🔌 Integration & Ingress", title_style="bold cyan")
+    t.add_column("Command", style="green", no_wrap=True)
+    t.add_column("Description")
+    t.add_row("nouse mcp serve", "MCP-server (stdio) för Copilot/OpenClaw")
+    t.add_row("nouse clawbot", "Clawbot bridge (status/allowlist/approve/ingest)")
+    t.add_row("nouse ingress", "Ingress-adapterlager (Telegram m.fl.)")
+    t.add_row("nouse allowlist", "Pairing/allowlist för extern ingress")
+    t.add_row("nouse plugins", "Skill/plugin-livscykel med versionsspårning")
+    console.print(t)
+
+    # ── Configuration ──
+    t = Table(show_header=True, header_style="bold", title="⚙️  Konfiguration", title_style="bold cyan")
+    t.add_column("Command", style="green", no_wrap=True)
+    t.add_column("Description")
+    t.add_row("nouse setup", "Konfigurera lagringsprofil (small/medium/large)")
+    t.add_row("nouse llm", "Hantera LLM-providers — auto-detect & konfigurera")
+    t.add_row("nouse models", "Modell-failover policy per tasktyp")
+    t.add_row("nouse session", "Sessionslager (lifecycle + runs + energi)")
+    t.add_row("nouse usage", "Usage/cost-telemetri per run/modell/session")
+    console.print(t)
+
     console.print(
-        "\n[dim]Snabbvägar: `nouse brain state` · `nouse clawbot status --channel ops` · `nouse --help`[/dim]"
+        "\n[dim]Snabbstart: [green]nouse start me[/green] · Detaljer: [green]nouse <command> --help[/green] · Version: [green]nouse -V[/green][/dim]"
     )
 
 
@@ -4314,6 +4408,318 @@ def deepdive_cmd(
         f"committed=[bold]{batch.total_committed}[/bold] "
         f"flagged={batch.total_flagged} ({batch.duration:.1f}s)"
     )
+
+
+@app.command()
+def enrich(
+    rounds:      int   = typer.Option(2,   "--rounds",   "-r", help="Antal BFS-rundor"),
+    budget:      int   = typer.Option(30,  "--budget",   "-b", help="Max noder per runda"),
+    max_degree:  int   = typer.Option(3,   "--max-degree",     help="Noder med ≤N kanter bearbetas"),
+    concurrency: int   = typer.Option(3,   "--concurrency",    help="Parallella LLM-anrop"),
+    strategy:    str   = typer.Option("gravity", "--strategy", "-s",
+                                      help="gravity | periphery | random"),
+    dry_run:     bool  = typer.Option(False,"--dry-run",        help="Visa kandidater utan att skriva"),
+) -> None:
+    """
+    Berika isolerade noder via frontier LLM.
+
+    Hittar noder med få kanter och ber GPT aktivt fylla i strukturella
+    relationer — hierarkiska, korsdomän och mekanistiska kopplingar.
+    Körs i BFS-rundor: varje ny nod som skapas seedar nästa runda.
+
+    Strategier:
+      gravity   — Noder NÄRA ett hub bearbetas först. Minskar tomrymden
+                  runt klustercentrum. Bäst för att förtäta det du vet.
+      periphery — Noder LÄNGST från alla hub. Utforskar okänd terräng.
+      random    — Baslinje.
+
+    Exempel:
+      nouse enrich --rounds 2 --budget 50
+      nouse enrich --strategy periphery --budget 100
+      nouse enrich --max-degree 1 --budget 100  # bara orphans
+    """
+    import asyncio
+    from nouse.field.surface import FieldSurface
+    from nouse.field.limbic_state import LimbicState
+    from nouse.learning_coordinator import LearningCoordinator
+
+    console.print(
+        f"[cyan]GraphEnricher start:[/cyan] rounds={rounds}, budget={budget}/runda, "
+        f"max_degree={max_degree}, concurrency={concurrency}, strategy=[bold]{strategy}[/bold]"
+        + (" [yellow](dry-run)[/yellow]" if dry_run else "")
+    )
+
+    if dry_run:
+        # Visa kandidater utan att skriva
+        try:
+            field = FieldSurface(read_only=True)
+        except RuntimeError:
+            console.print("[red]Databasen låst — stoppa daemon eerst (nouse daemon stop)[/red]")
+            raise typer.Exit(1)
+        from nouse.daemon.graph_enricher import _compute_degrees, _find_sparse_nodes
+        degrees = _compute_degrees(field)
+        candidates = _find_sparse_nodes(field, degrees, max_degree, budget, set(), True, strategy)
+        console.print(f"\n[bold]Kandidater ({len(candidates)} st med ≤{max_degree} kanter, strategy={strategy}):[/bold]")
+        for name, domain in candidates[:20]:
+            deg = degrees.get(name, 0)
+            console.print(f"  [dim]{domain:25}[/dim]  {name}  [dim](grad={deg})[/dim]")
+        if len(candidates) > 20:
+            console.print(f"  [dim]... och {len(candidates)-20} till[/dim]")
+        return
+
+    try:
+        field = FieldSurface()
+    except RuntimeError as e:
+        if "lock" in str(e).lower():
+            console.print("[red]Databasen låst — stoppa daemon först (nouse daemon stop)[/red]")
+        else:
+            console.print(f"[red]Fel: {e}[/red]")
+        raise typer.Exit(1)
+
+    limbic = LimbicState()
+    coordinator = LearningCoordinator(field, limbic)
+
+    from nouse.daemon.graph_enricher import run_enrichment
+    stats = asyncio.run(run_enrichment(
+        field, coordinator,
+        max_degree=max_degree,
+        rounds=rounds,
+        budget_per_round=budget,
+        concurrency=concurrency,
+        strategy=strategy,
+    ))
+
+    console.print(
+        f"\n[green bold]✓ Berikningsklar[/green bold]\n"
+        f"  Noder bearbetade : [bold]{stats.nodes_processed}[/bold]\n"
+        f"  Relationer tillagda: [bold]{stats.relations_added}[/bold]\n"
+        f"  Korsdomänlänkar  : [bold]{stats.cross_domain_links}[/bold]\n"
+        f"  Nya noder funna  : [bold]{stats.new_nodes_discovered}[/bold]\n"
+        f"  Rundor           : {stats.rounds_completed}/{rounds}\n"
+        f"  Fel              : [dim]{stats.errors}[/dim]"
+    )
+
+
+@app.command()
+def bridge(
+    concept_a:   str        = typer.Argument(...,    help="Startkoncept, t.ex. 'svampsoppa'"),
+    concept_b:   str        = typer.Argument("",     help="Målkoncept (tomt = korsdomän-discovery)"),
+    domains:     str        = typer.Option("",       "--domains", "-d",
+                                           help="Komma-sep domäner för korsdomän-discovery"),
+    max_pairs:   int        = typer.Option(20,       "--max-pairs", "-n",
+                                           help="Max par att evaluera vid discovery"),
+    sample:      int        = typer.Option(5,        "--sample",
+                                           help="Noder per domän vid discovery"),
+    force:       bool       = typer.Option(False,    "--force",
+                                           help="Bygg brygga även om väg redan finns i grafen"),
+    show_chain:  bool       = typer.Option(True,     "--show-chain/--no-chain",
+                                           help="Visa kopplingkedja i terminalen"),
+) -> None:
+    """
+    Hitta latenta strukturella bryggor mellan orelaterade koncept.
+
+    Specifik brygga:
+      nouse bridge svampsoppa kvantfysik
+      nouse bridge Wittgenstein "kvantmekanik" --force
+
+    Korsdomän-discovery (samplar alla domäner):
+      nouse bridge --domains "filosofi,fysik,biologi" --max-pairs 30
+      nouse bridge _auto --max-pairs 50
+
+    Algoritm:
+      1. Extrahera axiom-signatur för varje nod (strukturellt fingeravtryck)
+      2. Skicka BÅDA signaturerna till frontier LLM
+      3. LLM söker den isomorfa kopplingkedjan A→x1→x2→B
+      4. Validera varje hopp med Bayesiansk evidensbedömning
+      5. Skriv kedjan + META::bridge-nod till grafen
+    """
+    import asyncio
+    from nouse.field.surface import FieldSurface
+    from nouse.field.limbic_state import LimbicState
+    from nouse.learning_coordinator import LearningCoordinator
+    from nouse.field.bridge_finder import (
+        discover_bridge, run_cross_domain_discovery,
+        extract_axiom_signature,
+    )
+
+    try:
+        field = FieldSurface()
+    except RuntimeError as e:
+        if "lock" in str(e).lower():
+            console.print("[red]Databasen låst — stoppa daemon eerst (nouse daemon stop)[/red]")
+        else:
+            console.print(f"[red]Fel: {e}[/red]")
+        raise typer.Exit(1)
+
+    limbic = LimbicState()
+    coordinator = LearningCoordinator(field, limbic)
+
+    # ── Specifik brygga ────────────────────────────────────────────────────────
+    if concept_b and concept_b != "_auto":
+        console.print(
+            f"[cyan]Söker latent brygga:[/cyan] "
+            f"[bold]{concept_a}[/bold] ↔ [bold]{concept_b}[/bold]"
+            + (" [dim](force)[/dim]" if force else "")
+        )
+
+        # Visa signaturer
+        sig_a = extract_axiom_signature(concept_a, field)
+        sig_b = extract_axiom_signature(concept_b, field)
+        overlap = sig_a.overlap_score(sig_b)
+
+        console.print(f"\n[dim]Axiom-overlap: {overlap:.3f}[/dim]")
+        console.print(f"[dim]Signatur {concept_a}: {list(sig_a.structural_pattern)[:6]}[/dim]")
+        console.print(f"[dim]Signatur {concept_b}: {list(sig_b.structural_pattern)[:6]}[/dim]")
+
+        bridge_result = asyncio.run(
+            discover_bridge(concept_a, concept_b, field, coordinator, force=force)
+        )
+
+        if bridge_result is None:
+            console.print("\n[yellow]Ingen ny brygga behövs[/yellow] — antingen finns vägen redan "
+                          "eller confidence < 0.3. Prova [bold]--force[/bold] eller djupare berikelse.")
+            return
+
+        console.print(f"\n[green bold]✓ Brygga kristalliserad![/green bold]")
+        console.print(f"  Overlap  : {bridge_result.overlap_score:.3f}")
+        console.print(f"  Meta-nod : [dim]{bridge_result.meta_bridge_id}[/dim]")
+
+        if show_chain:
+            console.print("\n[bold]Kopplingkedja:[/bold]")
+            for i, (node, rel) in enumerate(
+                zip(bridge_result.chain, bridge_result.relations + [""])
+            ):
+                score_str = (
+                    f" [dim](ev={bridge_result.evidence_per_hop[i]:.3f})[/dim]"
+                    if i < len(bridge_result.evidence_per_hop) else ""
+                )
+                if i < len(bridge_result.relations):
+                    console.print(f"  [bold]{node}[/bold]{score_str}")
+                    console.print(f"    [cyan]↓ {rel}[/cyan]")
+                else:
+                    console.print(f"  [bold]{node}[/bold]{score_str}")
+
+        if bridge_result.why:
+            console.print(f"\n[italic dim]{bridge_result.why}[/italic dim]")
+        return
+
+    # ── Korsdomän-discovery ────────────────────────────────────────────────────
+    domain_list = [d.strip() for d in domains.split(",") if d.strip()] or None
+    console.print(
+        f"[cyan]Korsdomän-discovery:[/cyan] "
+        f"max_pairs={max_pairs}, sample={sample}/domän"
+        + (f", domäner=[{', '.join(domain_list)}]" if domain_list else "")
+    )
+
+    session = asyncio.run(
+        run_cross_domain_discovery(
+            field, coordinator,
+            domains=domain_list,
+            sample_per_domain=sample,
+            max_pairs=max_pairs,
+        )
+    )
+
+    console.print(
+        f"\n[green bold]✓ Discovery klar[/green bold]\n"
+        f"  Bryggor hittade  : [bold]{session.bridges_found}[/bold]\n"
+        f"  Bryggor skrivna  : [bold]{session.bridges_written}[/bold]\n"
+        f"  Par evaluerade   : {session.pairs_evaluated}\n"
+        f"  Korsdomänpar     : {session.cross_domain_pairs}\n"
+        f"  Fel              : [dim]{session.errors}[/dim]"
+    )
+
+    if session.top_bridges and show_chain:
+        console.print("\n[bold]Topp-bryggor:[/bold]")
+        for b in sorted(session.top_bridges, key=lambda x: x.overlap_score, reverse=True)[:5]:
+            chain_str = " → ".join(b.chain)
+            console.print(f"  [bold]{b.source}[/bold] ↔ [bold]{b.target}[/bold]")
+            console.print(f"    [dim]{chain_str}[/dim]")
+            if b.why:
+                console.print(f"    [italic dim]{b.why[:120]}[/italic dim]")
+
+
+@app.command()
+def cascade(
+    concepts:     str  = typer.Argument(...,
+                         help="Komma-separerade startbegrepp, t.ex. 'mycel,kvantfysik,Wittgenstein'"),
+    generations:  int  = typer.Option(4,  "--generations", "-g",
+                                      help="Antal kompounderade lager"),
+    pairs:        int  = typer.Option(3,  "--pairs", "-p",
+                                      help="Par att kombinera per generation"),
+) -> None:
+    """
+    Kompounderad idésyntes: 1+1=3+1=5+1=9...
+
+    Tar en lista av startbegrepp och kombinerar dem iterativt.
+    Varje generation skapar emergenta syntesnoder som sedan
+    kombineras vidare i nästa generation.
+
+    Generation 0: A + B = C  (tredje idén)
+    Generation 1: C + D = E  (fjärde idén — kräver C för att existera)
+    Generation 2: E + A = F  (femte idén — ser tillbaka och framåt)
+
+    Det är precis det mänskligt kreativt tänkande gör.
+    En vanlig LLM kan inte göra detta — den har inget minne av C och D.
+    NoUse är det substratet.
+
+    Exempel:
+      nouse cascade "mycel,kvantfysik,Wittgenstein"
+      nouse cascade "evolution,grammatik,termodynamik" --generations 3
+    """
+    import asyncio
+    from nouse.field.surface import FieldSurface
+    from nouse.field.limbic_state import LimbicState
+    from nouse.learning_coordinator import LearningCoordinator
+    from nouse.field.bridge_finder import run_synthesis_cascade
+
+    seed_list = [c.strip() for c in concepts.split(",") if c.strip()]
+    if len(seed_list) < 2:
+        console.print("[red]Minst 2 startbegrepp krävs[/red]")
+        raise typer.Exit(1)
+
+    console.print(
+        f"[cyan]Synthesis Cascade:[/cyan] {len(seed_list)} frön, "
+        f"{generations} generationer, {pairs} par/gen\n"
+        f"Frön: [bold]{', '.join(seed_list)}[/bold]\n"
+    )
+
+    try:
+        field = FieldSurface()
+    except RuntimeError as e:
+        if "lock" in str(e).lower():
+            console.print("[red]Databasen låst — stoppa daemon eerst (nouse daemon stop)[/red]")
+        else:
+            console.print(f"[red]Fel: {e}[/red]")
+        raise typer.Exit(1)
+
+    limbic = LimbicState()
+    coordinator = LearningCoordinator(field, limbic)
+
+    result = asyncio.run(run_synthesis_cascade(
+        seed_list, field, coordinator,
+        max_generations=generations,
+        pairs_per_generation=pairs,
+    ))
+
+    console.print(f"\n[green bold]✓ Kaskad klar[/green bold]")
+    console.print(f"  Generationer: {result.generations}")
+    console.print(f"  Syntesnoder : [bold]{result.total_syntheses}[/bold]")
+
+    if result.synthesis_chain:
+        console.print("\n[bold]Emergerade insikter (i ordning):[/bold]")
+        for i, name in enumerate(result.synthesis_chain):
+            indent = "  " + "  " * (i // pairs)
+            gen_num = i // pairs
+            console.print(f"{indent}[cyan]Gen {gen_num}:[/cyan] [bold]{name}[/bold]")
+
+    if result.final_synthesis:
+        console.print(
+            f"\n[yellow bold]Djupaste insikt:[/yellow bold] {result.final_synthesis}"
+        )
+        console.print(
+            f"[dim](Kräver {result.generations} lager av syntes för att bli synlig)[/dim]"
+        )
 
 
 @app.callback()

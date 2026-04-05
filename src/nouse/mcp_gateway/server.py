@@ -192,3 +192,7 @@ def kernel_execute_self_update_tool(plan: str, approval_token: str = "") -> dict
 
 def run_stdio() -> None:
     asyncio.run(mcp.run_stdio_async())
+
+
+if __name__ == "__main__":
+    run_stdio()

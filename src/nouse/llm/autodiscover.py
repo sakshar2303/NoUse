@@ -60,15 +60,17 @@ _PROVIDER_PROBES: list[tuple[ProviderKind, str, str]] = [
 _API_PROVIDERS: dict[ProviderKind, dict] = {
     "copilot": {
         "env_token":  "GITHUB_TOKEN",
-        "token_url":  "https://api.github.com/copilot_internal/v2/token",
-        "base_url":   "https://api.githubcopilot.com",
-        "models_url": "https://api.githubcopilot.com/models",
+        # GitHub Models API (ersätter deprecated copilot_internal/v2/token)
+        "base_url":   "https://models.inference.ai.azure.com",
+        "models_url": "https://models.inference.ai.azure.com/models",
         "default_models": {
             "chat":       "gpt-4o",
-            "agent":      "gpt-4o",
+            "agent":      "Meta-Llama-3.1-405B-Instruct",
             "extract":    "gpt-4o-mini",
-            "synthesize": "gpt-4o",
+            "synthesize": "Meta-Llama-3.1-405B-Instruct",
             "curiosity":  "gpt-4o-mini",
+            "teacher":    "gpt-4o",
+            "decomposition": "gpt-4o",
         },
     },
     "anthropic": {
@@ -205,33 +207,38 @@ async def _probe_local(kind: ProviderKind, base: str, path: str) -> DiscoveredPr
 
 
 async def _probe_copilot(token: str) -> DiscoveredProvider | None:
-    """Hämta Copilot-token via GitHub-token, verifiera åtkomst."""
+    """Verifiera GitHub Models API-åtkomst via GITHUB_TOKEN."""
     try:
         t0 = time.monotonic()
         cfg = _API_PROVIDERS["copilot"]
+        # GitHub Models API — ersätter deprecated copilot_internal/v2/token
         async with httpx.AsyncClient(timeout=_PROBE_TIMEOUT) as client:
             r = await client.get(
-                cfg["token_url"],
+                cfg["models_url"],
                 headers={
-                    "Authorization": f"token {token}",
+                    "Authorization": f"Bearer {token}",
                     "Accept": "application/json",
-                    "Editor-Version": "vscode/1.95.0",
-                    "Copilot-Integration-Id": "vscode-chat",
                 },
             )
         latency = (time.monotonic() - t0) * 1000
         if r.status_code != 200:
             return None
 
-        # Token-hämtning lyckades — Copilot är tillgängligt
+        # Hämta faktisk modellista från GitHub Models
+        try:
+            models_data = r.json()
+            available = [m.get("name") or m.get("id", "") for m in models_data if m.get("name") or m.get("id")]
+        except Exception:
+            available = list(cfg["default_models"].values())
+
         return DiscoveredProvider(
             kind="copilot",
             base_url=cfg["base_url"],
-            api_key=token,   # GitHub-token; klienten hämtar Copilot-token vid behov
-            available_models=list(cfg["default_models"].values()),
+            api_key=token,
+            available_models=available or list(cfg["default_models"].values()),
             default_models=cfg["default_models"],
             latency_ms=round(latency, 1),
-            note="GitHub Copilot via GITHUB_TOKEN",
+            note=f"GitHub Models API via GITHUB_TOKEN ({len(available)} modeller)",
         )
     except Exception:
         return None

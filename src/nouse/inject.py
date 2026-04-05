@@ -366,12 +366,146 @@ class NouseBrain:
         return self._field
 
 
+# ── NouseBrainHTTP ────────────────────────────────────────────────────────────
+
+class NouseBrainHTTP:
+    """
+    HTTP client for NouseBrain — returned by attach() when the daemon is running.
+
+    Avoids opening KuzuDB directly (write-lock conflict) by routing all calls
+    through the daemon's REST API at localhost:8765.
+
+    The interface is identical to NouseBrain so callers need no changes.
+    """
+
+    def __init__(self, base_url: str = "http://127.0.0.1:8765") -> None:
+        import httpx
+        self._base = base_url.rstrip("/")
+        self._client = httpx.Client(timeout=30.0)
+
+    # ── Primary query API ─────────────────────────────────────────────────────
+
+    def query(self, question: str, top_k: int = 6) -> QueryResult:
+        r = self._client.post(
+            f"{self._base}/api/brain/query",
+            json={"question": question, "top_k": top_k},
+        )
+        r.raise_for_status()
+        data = r.json()
+        axioms = [
+            Axiom(
+                src=a["src"], rel=a["rel"], tgt=a["tgt"],
+                evidence=a["evidence"], flagged=a["flagged"],
+                why=a.get("why", ""), strength=a.get("strength", 1.0),
+            )
+            for a in data.get("axioms", [])
+        ]
+        concepts = [
+            ConceptProfile(
+                name=c["name"],
+                summary=c.get("summary", ""),
+                claims=c.get("claims", []),
+                evidence_refs=c.get("evidence_refs", []),
+                related_terms=c.get("related_terms", []),
+                uncertainty=c.get("uncertainty"),
+                revision_count=c.get("revision_count", 0),
+                axioms=[a for a in axioms if a.src == c["name"]],
+            )
+            for c in data.get("concepts", [])
+        ]
+        return QueryResult(
+            query=data.get("query", question),
+            concepts=concepts,
+            axioms=axioms,
+            confidence=float(data.get("confidence", 0.0)),
+            domains=data.get("domains", []),
+            has_knowledge=bool(data.get("has_knowledge", False)),
+        )
+
+    def recall_axioms(self, concept_or_query: str, top_k: int = 8) -> list[Axiom]:
+        return self.query(concept_or_query, top_k=top_k).axioms
+
+    def context_block(self, query: str, top_k: int = 6, max_axioms: int = 15) -> str:
+        return self.query(query, top_k=top_k).context_block(max_axioms=max_axioms)
+
+    def recall(self, query: str, top_k: int = 5) -> str:
+        return self.context_block(query, top_k=top_k)
+
+    def recall_relations(self, concept: str) -> list[dict]:
+        return [
+            {"type": a.rel, "target": a.tgt,
+             "evidence_score": a.evidence, "why": a.why, "strength": a.strength}
+            for a in self.query(concept).axioms
+        ]
+
+    # ── Write API ─────────────────────────────────────────────────────────────
+
+    def learn(self, prompt: str, response: str, source: str = "conversation") -> None:
+        try:
+            self._client.post(
+                f"{self._base}/api/brain/learn",
+                json={"prompt": prompt, "response": response, "source": source},
+            )
+        except Exception:
+            pass
+
+    def add(
+        self,
+        src: str,
+        rel_type: str,
+        tgt: str,
+        *,
+        why: str = "",
+        evidence_score: float = 0.6,
+    ) -> None:
+        try:
+            self._client.post(
+                f"{self._base}/api/brain/add",
+                json={"src": src, "rel_type": rel_type, "tgt": tgt,
+                      "why": why, "evidence_score": evidence_score},
+            )
+        except Exception:
+            pass
+
+    # ── Misc ──────────────────────────────────────────────────────────────────
+
+    def stats(self) -> dict:
+        try:
+            return self._client.get(f"{self._base}/api/status").json()
+        except Exception:
+            return {}
+
+    @property
+    def field(self):
+        raise AttributeError(
+            "Direct .field access is not available in HTTP mode. "
+            "Use brain.query() / brain.recall_axioms() instead."
+        )
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
-def attach(db_path: str | Path | None = None, read_only: bool = False) -> NouseBrain:
+def attach(
+    db_path: str | Path | None = None,
+    read_only: bool = False,
+    *,
+    port: int = 8765,
+    prefer_http: bool = True,
+) -> "NouseBrain | NouseBrainHTTP":
     """
-    One-line entry point:
-        brain = nouse.attach()               # read+write
-        brain = nouse.attach(read_only=True) # eval / parallel reads
+    One-line entry point.  Auto-detects a running daemon and connects via HTTP
+    so the caller never needs to worry about KuzuDB write-lock conflicts.
+
+        brain = nouse.attach()               # auto: HTTP if daemon running
+        brain = nouse.attach(prefer_http=False)  # always direct KuzuDB
+        brain = nouse.attach(read_only=True) # eval / direct read
     """
+    if prefer_http:
+        try:
+            import httpx
+            r = httpx.get(f"http://127.0.0.1:{port}/api/status", timeout=1.0)
+            if r.status_code == 200:
+                return NouseBrainHTTP(base_url=f"http://127.0.0.1:{port}")
+        except Exception:
+            pass
     return NouseBrain(db_path=db_path, read_only=read_only)

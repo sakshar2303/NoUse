@@ -32,7 +32,7 @@ from nouse.daemon.sources import (
     BashHistorySource, ChromeBookmarksSource, ChromeHistorySource,
     CaptureQueueSource,
 )
-from nouse.daemon.lock import BrainLock
+from nouse.daemon.write_queue import enqueue_write, start_worker, stop_worker
 from nouse.self_layer.writer import write_discovery
 from nouse.self_layer import ensure_living_core, update_living_core
 from nouse.orchestrator.compaction import should_run, run_compaction, WEAK_THRESHOLD
@@ -432,10 +432,11 @@ async def _process_pending_system_events(
         except Exception as e:
             log.warning("System-event minneslagring misslyckades (session=%s): %s", sid, e)
 
-        added = 0
         _limbic = load_state()
         _coordinator = LearningCoordinator(field, _limbic)
-        with BrainLock():
+
+        async def _write_sysevt() -> int:
+            count = 0
             for r in rels:
                 field.add_concept(r["src"], r["domain_src"], source=meta["source"])
                 field.add_concept(r["tgt"], r["domain_tgt"], source=meta["source"])
@@ -464,8 +465,10 @@ async def _process_pending_system_events(
                     )
                 except Exception:
                     pass
-                added += 1
-        added_total += added
+                count += 1
+            return count
+
+        added_total += await enqueue_write(_write_sysevt())
     return processed, added_total
 
 
@@ -651,7 +654,8 @@ async def brain_loop(
                             memory_store.ingest_episode(text, meta, rels)
                         except Exception as e:
                             log.warning(f"Memory ingest misslyckades: {e}")
-                        with BrainLock():
+                        async def _write_source_rels() -> int:
+                            count = 0
                             for r in rels:
                                 field.add_concept(
                                     r["src"], r["domain_src"], source=meta.get("source", "file")
@@ -659,16 +663,12 @@ async def brain_loop(
                                 field.add_concept(
                                     r["tgt"], r["domain_tgt"], source=meta.get("source", "file")
                                 )
-                                
                                 # ── brain_sync: Analogy Event (cross-domain relations) ──
-                                # Föreslå att starka relationer mellan olika domäner ses som analogier
                                 if BRAIN_SYNC_ENABLED:
                                     src_domain = str(r.get("domain_src") or "").strip().lower()
                                     tgt_domain = str(r.get("domain_tgt") or "").strip().lower()
                                     different_domains = src_domain != tgt_domain and len(src_domain) > 0 and len(tgt_domain) > 0
-                                    
-                                    if different_domains and src_domain != tgt_domain:
-                                        # Endast hög-evidens relationer mellan domäner
+                                    if different_domains:
                                         try:
                                             strength = float(r.get("strength", 0.0) or 0.0)
                                             evidence = float(r.get("evidence_score", 0.0) or 0.0)
@@ -684,7 +684,6 @@ async def brain_loop(
                                                     BRAIN_TRANSPORTER.send(evt)
                                         except Exception:
                                             pass
-                                
                                 field.add_relation(
                                     r["src"],
                                     r["type"],
@@ -705,8 +704,12 @@ async def brain_loop(
                                     evidence_score=float(r.get("evidence_score") or 0.35),
                                     source=meta.get("path", ""),
                                 )
-                                new_rel += 1
-                                source_relations_added += 1
+                                count += 1
+                            return count
+
+                        _added = await enqueue_write(_write_source_rels())
+                        new_rel += _added
+                        source_relations_added += _added
 
                         if (
                             SOURCE_PROGRESS_TRACE
@@ -889,8 +892,8 @@ async def brain_loop(
                         disc["domain_b"],
                         lam=limbic_state.lam,
                     )
-                    synth_count = 0
-                    with BrainLock():
+                    async def _write_bridges() -> int:
+                        count = 0
                         for b in bridges:
                             field.add_concept(b["src"], b.get("domain_src", "okänd"))
                             field.add_concept(b["tgt"], b.get("domain_tgt", "okänd"))
@@ -914,7 +917,10 @@ async def brain_loop(
                                 evidence_score=float(b.get("evidence_score") or 0.35),
                                 source="syntes",
                             )
-                            synth_count += 1
+                            count += 1
+                        return count
+
+                    synth_count = await enqueue_write(_write_bridges())
                     
                     # ── brain_sync: Bisociation Event ───────────────────────
                     if BRAIN_SYNC_ENABLED and BRAIN_TRANSPORTER is None:
@@ -1101,14 +1107,14 @@ async def brain_loop(
                                 rels, _diag = await extract_relations_with_diagnostics(
                                     burst_text, meta
                                 )
-                                added = 0
-                                evidence_scores: list[float] = []
-                                tier_counts = {"hypotes": 0, "indikation": 0, "validerad": 0}
-                                with BrainLock():
+                                async def _write_curiosity_rels() -> tuple[int, list[float], dict]:
+                                    _scores: list[float] = []
+                                    _tiers = {"hypotes": 0, "indikation": 0, "validerad": 0}
+                                    _count = 0
                                     for r in rels:
                                         ass = assess_relation(r, task=task)
-                                        evidence_scores.append(ass.score)
-                                        tier_counts[ass.tier] = tier_counts.get(ass.tier, 0) + 1
+                                        _scores.append(ass.score)
+                                        _tiers[ass.tier] = _tiers.get(ass.tier, 0) + 1
                                         field.add_concept(
                                             r["src"], r["domain_src"], source="curiosity"
                                         )
@@ -1138,7 +1144,12 @@ async def brain_loop(
                                             evidence_score=float(r.get("evidence_score") or 0.35),
                                             source=f"curiosity:{ass.tier}",
                                         )
-                                        added += 1
+                                        _count += 1
+                                    return _count, _scores, _tiers
+
+                                added, evidence_scores, tier_counts = await enqueue_write(
+                                    _write_curiosity_rels()
+                                )
 
                                 avg_evidence = (
                                     sum(evidence_scores) / len(evidence_scores)
@@ -1211,12 +1222,13 @@ async def brain_loop(
             # ── 9: Konsolidera episodiskt minne till semantiskt minne ──────────
             if MEMORY_CONSOLIDATION_EVERY > 0 and cycle % MEMORY_CONSOLIDATION_EVERY == 0:
                 try:
-                    with BrainLock():
-                        cstats = memory_store.consolidate(
+                    async def _consolidate_memory():
+                        return memory_store.consolidate(
                             field,
                             max_episodes=MEMORY_CONSOLIDATION_BATCH,
                             strict_min_evidence=MEMORY_CONSOLIDATION_MIN_EVIDENCE,
                         )
+                    cstats = await enqueue_write(_consolidate_memory())
                     
                     # ── brain_sync: Concept Crystallize Event ───────────────────
                     if BRAIN_SYNC_ENABLED and BRAIN_TRANSPORTER:
@@ -1251,12 +1263,13 @@ async def brain_loop(
             # ── 10: Knowledge backfill (säkrar kontext + fakta per nod) ────────
             if KNOWLEDGE_BACKFILL_EVERY > 0 and cycle % KNOWLEDGE_BACKFILL_EVERY == 0:
                 try:
-                    with BrainLock():
-                        backfill = field.backfill_missing_concept_knowledge(
+                    async def _backfill_knowledge():
+                        return field.backfill_missing_concept_knowledge(
                             limit=KNOWLEDGE_BACKFILL_LIMIT,
                             strict=True,
                             min_evidence_score=KNOWLEDGE_BACKFILL_MIN_EVIDENCE,
                         )
+                    backfill = await enqueue_write(_backfill_knowledge())
                     after = backfill.get("after") or {}
                     log.info(
                         "  Knowledge backfill: "
@@ -1277,7 +1290,7 @@ async def brain_loop(
                     report_path.parent.mkdir(parents=True, exist_ok=True)
                     report_path.write_text(f"# B76 Morning Report (Cykel {cycle})\n\n{report}")
                     log.info(f"  Morning Report sparad till {report_path}")
-                except BaseException as e:
+                except Exception as e:
                     log.error(f"  Kunde inte spara Morning Report: {e}")
 
                 try:
@@ -1493,7 +1506,7 @@ async def _run_headless(field: FieldSurface, memory: MemoryStore) -> None:
     autonomy = AutonomyLoop(conductor=conductor)
     bind_wake_event(wake_event)
     _install_signal_handlers(stop_event)
-    
+
     # ── brain_sync: Initiera transporter vid headless-start ──────────────
     if BRAIN_SYNC_ENABLED:
         try:
@@ -1501,11 +1514,46 @@ async def _run_headless(field: FieldSurface, memory: MemoryStore) -> None:
             log.info("  brain_sync: Headless startad, transporter aktiverad.")
         except Exception as e:
             log.warning(f"  brain_sync: Kunde inte initiera transporter vid start: {e}")
-    
+
+    start_worker()
     await autonomy.start()
+    # Wrap brain_loop as a Task so we can cancel it on SIGTERM.
+    # The old `await brain_loop(...)` blocked the entire shutdown path because
+    # it was stuck inside sync KuzuDB BFS or LLM calls with no timeout.
+    brain_task = asyncio.create_task(
+        brain_loop(field, stop_event=stop_event, wake_event=wake_event, memory=memory)
+    )
+    stop_task = asyncio.create_task(stop_event.wait())
     try:
-        await brain_loop(field, stop_event=stop_event, wake_event=wake_event, memory=memory)
+        _done, _pending = await asyncio.wait(
+            {brain_task, stop_task},
+            return_when=asyncio.FIRST_COMPLETED,
+        )
+        # Always cancel whichever task didn't complete first
+        for t in _pending:
+            t.cancel()
+        if not brain_task.done():
+            # stop fired while brain_loop was running — give it 25s to clean up
+            log.info("Stoppsignal — avbryter brain loop (max 25s)...")
+            brain_task.cancel()
+        # Wait max 25s regardless of task state (handles both sync-blocked and
+        # CancelledError-swallowing code paths in brain_loop)
+        _still_running = {t for t in _pending if not t.done()} | (
+            {brain_task} if not brain_task.done() else set()
+        )
+        if _still_running:
+            await asyncio.wait(_still_running, timeout=25.0)
+        # Log if brain_task didn't exit cleanly
+        if not brain_task.done():
+            log.warning("Brain loop svarade inte på cancel inom 25s — ger upp.")
+        elif not brain_task.cancelled():
+            exc = brain_task.exception()
+            if exc is not None:
+                raise exc
     finally:
+        stop_worker()
+        if not brain_task.done():
+            brain_task.cancel()
         await autonomy.stop()
         bind_wake_event(None)
 
@@ -1567,7 +1615,13 @@ async def _run_with_web(field: FieldSurface, memory: MemoryStore, port: int) -> 
         for task in pending:
             task.cancel()
         if pending:
-            await asyncio.gather(*pending, return_exceptions=True)
+            try:
+                await asyncio.wait_for(
+                    asyncio.gather(*pending, return_exceptions=True),
+                    timeout=20.0,
+                )
+            except asyncio.TimeoutError:
+                log.warning("Pending tasks svarade inte inom 20s under shutdown.")
 
         if first_exc is not None:
             raise first_exc
