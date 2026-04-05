@@ -1,14 +1,14 @@
 [project]
 name = "nouse"
-version = "0.2.0"
-description = "The Cognitive Substrate Framework for Model-Agnostic AI — the missing link to AGI"
+version = "0.2.1"
+description = "Epistemic grounding substrate for LLMs — knows what it knows, what it doesn't, and why"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [
   { name = "Björn Wikström", email = "bjorn@base76.se" }
 ]
-keywords = ["ai", "cognition", "memory", "brain", "agi", "mcp", "plasticity", "graph", "knowledge-graph"]
+keywords = ["ai", "cognition", "epistemics", "uncertainty", "brain", "agi", "mcp", "plasticity", "graph", "knowledge-graph", "hebbian", "epistemic-grounding", "intent-disambiguation"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
@@ -39,7 +39,7 @@ dependencies = [
   "pydantic>=2.12.5",
   "pandas>=3.0.1",
   "flask>=3.0.0",
-  "mcp>=0.1.0",
+  "mcp[cli]>=1.0.0",
 ]
 
 [project.optional-dependencies]
@@ -56,10 +56,11 @@ brian2 = [
 nouse        = "nouse.cli.main:app"
 nouse-brain  = "nouse.daemon.main:main"
 nouse-server = "nouse.web.server:main"
+nouse-mcp    = "nouse.mcp.server:main"
 
 [project.urls]
-Homepage   = "https://github.com/bjornwikstrom/NoUse"
-Repository = "https://github.com/bjornwikstrom/NoUse"
+Homepage   = "https://github.com/base76-research-lab/NoUse"
+Repository = "https://github.com/base76-research-lab/NoUse"
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
