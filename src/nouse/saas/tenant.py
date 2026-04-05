@@ -10,8 +10,8 @@ TENANTS_ROOT = Path(os.getenv("NOUSE_TENANTS_ROOT", str(Path.home() / ".local/sh
 
 
 def db_path_for(tenant_id: str) -> Path:
-    """Returnerar SQLite/KuzuDB-sökväg för given tenant."""
+    """Returnerar SQLite-sökväg för given tenant."""
     safe = "".join(c if c.isalnum() or c in "-_" else "_" for c in tenant_id)
-    path = TENANTS_ROOT / safe / "field.kuzu"
+    path = TENANTS_ROOT / safe / "field.sqlite"
     path.parent.mkdir(parents=True, exist_ok=True)
     return path

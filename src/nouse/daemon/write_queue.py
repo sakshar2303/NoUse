@@ -1,9 +1,9 @@
 """
-WriteQueue — Serialiserad skriv-kö för KuzuDB
-==============================================
+WriteQueue — Serialiserad skriv-kö
+===================================
 
-KuzuDB tillåter bara en writer åt gången. Alla skrivande API-anrop
-går via denna kö så att de väntar på varandra istället för att krascha.
+Alla skrivande API-anrop går via denna kö så att de serialiseras
+och inte konkurrerar om SQLite WAL-skrivlåset.
 
 Arkitektur:
   - En global asyncio.Queue med (coroutine, Future)-par

@@ -38,11 +38,11 @@ def create_snapshot(field: FieldSurface, tag: str = "auto") -> str:
     log.info(f"Metacognition: Påbörjar snapshot '{snapshot_name}' för forskningsanalys.")
     
     with BrainLock(timeout=10.0):
-        # 1. KuzuDB Backup - Vi kopierar databasfilerna
-        kuzu_path = Path.home() / ".local" / "share" / "nouse" / "field.kuzu"
-        if kuzu_path.exists():
-            db_target = target_dir / "field.kuzu"
-            shutil.copytree(kuzu_path, db_target, dirs_exist_ok=True)
+        # 1. SQLite Backup — kopiera databasfilen
+        sqlite_path = Path.home() / ".local" / "share" / "nouse" / "field.sqlite"
+        if sqlite_path.exists():
+            db_target = target_dir / "field.sqlite"
+            shutil.copy2(sqlite_path, db_target)
             
         # 2. Limbic State
         limbic = load_state()

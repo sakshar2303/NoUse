@@ -283,7 +283,7 @@ def daemon(
                         import subprocess
                         from pathlib import Path
 
-                        db_path = str(Path.home() / ".local" / "share" / "nouse" / "field.kuzu")
+                        db_path = str(Path.home() / ".local" / "share" / "nouse" / "field.sqlite")
                         raw = subprocess.check_output(["lsof", "-t", db_path], text=True).strip()
                         pids = [pid for pid in raw.splitlines() if pid.strip()]
                     except Exception:
@@ -4095,7 +4095,7 @@ def setup_cmd(
         "", "--cloud-db", help="URL till extern cloud-DB (medium: Qdrant, Pinecone etc.)"
     ),
     max_db_gb: float | None = typer.Option(
-        None, "--max-db-gb", help="Anpassad max storlek för field.kuzu (GB)"
+        None, "--max-db-gb", help="Anpassad max storlek för field.sqlite (GB)"
     ),
     status: bool = typer.Option(
         False, "--status", "-s", help="Visa aktiv tier och disk-hälsa"
@@ -4269,7 +4269,7 @@ def nightrun_cmd(
         from nouse.field.surface import FieldSurface
         from nouse.daemon.state import load_state
         from nouse.client import daemon_running as _nr_daemon_running
-        db_path = Path.home() / ".local" / "share" / "nouse" / "field.kuzu"
+        db_path = Path.home() / ".local" / "share" / "nouse" / "field.sqlite"
         if not db_path.exists():
             console.print("[red]Ingen FieldSurface hittad. Kör 'nouse run' minst en gång.[/red]")
             raise typer.Exit(1)
@@ -4356,7 +4356,7 @@ def enrich_nodes_cmd(
                 console.print(f"[yellow]Daemon-anrop misslyckades: {e}[/yellow]")
             raise typer.Exit(1)
 
-    db_path = Path.home() / ".local" / "share" / "nouse" / "field.kuzu"
+    db_path = Path.home() / ".local" / "share" / "nouse" / "field.sqlite"
     if not db_path.exists():
         console.print("[red]Ingen FieldSurface hittad. Kör 'nouse run' minst en gång.[/red]")
         raise typer.Exit(1)
@@ -4414,7 +4414,7 @@ def deepdive_cmd(
     from nouse.field.surface import FieldSurface
     from nouse.daemon.node_deepdive import deepdive_node, deepdive_batch, get_review_queue
 
-    db_path = Path.home() / ".local" / "share" / "nouse" / "field.kuzu"
+    db_path = Path.home() / ".local" / "share" / "nouse" / "field.sqlite"
     if not db_path.exists():
         console.print("[red]Ingen FieldSurface hittad. Kör 'nouse run' minst en gång.[/red]")
         raise typer.Exit(1)

@@ -183,7 +183,7 @@ def check_disk_health(db_path: Path | None = None) -> dict:
     cfg    = get_tier()
     limits = cfg.limits()
 
-    path = db_path or (Path.home() / ".local" / "share" / "nouse" / "field.kuzu")
+    path = db_path or (Path.home() / ".local" / "share" / "nouse" / "field.sqlite")
     current_gb = 0.0
     if path.exists():
         current_gb = os.path.getsize(path) / 1024**3
