@@ -33,7 +33,7 @@ from nouse.kernel import (
 from nouse.inject import attach, NouseBrain, Axiom, ConceptProfile, QueryResult
 from nouse.search.escalator import EscalationResult
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 __all__ = [
     # Inject API — one-line entry point

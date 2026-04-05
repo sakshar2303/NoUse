@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.1] - 2026-04-05
+
+### Fixed
+- Remaining `field.kuzu` path references updated to `field.sqlite` (cli, daemon, saas, metacognition).
+- Migration script handles KuzuDB schemas without `evidence_score`/`assumption_flag` columns.
+- Snapshot backup uses `copy2` instead of `copytree` (SQLite is a single file, not a directory).
+
 ## [0.3.0] - 2026-04-05
 
 ### Changed
