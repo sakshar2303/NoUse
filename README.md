@@ -2,20 +2,19 @@
 
 ![Nouse](IMG/Nouse.png)
 
-**Structured memory for LLM agents that knows not only what it knows, but how confidently it knows it and where knowledge runs out.**
+**Epistemic grounding for LLMs — knows what it knows, how confidently, and where knowledge runs out.**
 
-Epistemic grounding for any model.
+An 8B model with Nouse outperforms a 70B model without it.
 
 [![PyPI](https://img.shields.io/pypi/v/nouse)](https://pypi.org/project/nouse/)
+[![Tests](https://github.com/base76-research-lab/NoUse/actions/workflows/tests.yml/badge.svg)](https://github.com/base76-research-lab/NoUse/actions/workflows/tests.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Benchmark](https://img.shields.io/badge/benchmark-96%25_vs_46%25-brightgreen)](eval/RESULTS.md)
 
-[Quick Start](#quick-start) · [Why It Matters](#why-it-matters) · [What You Get](#what-you-get) · [Benchmark](#run-the-benchmark-yourself)
+[Quick Start](#quick-start) · [Benchmark](#the-result) · [How It Works](#how-it-works) · [vs Alternatives](#how-nouse-differs-from-alternatives) · [Examples](#use-with-openai-anthropic-or-ollama) · [Research](#research) · [Roadmap](#roadmap)
 
 ![Nouse demo](IMG/demo-en.gif)
-
-Repo social preview asset: [IMG/nouse-social-preview.svg](IMG/nouse-social-preview.svg)
 
 ---
 
@@ -50,7 +49,7 @@ NoUse gives an LLM agent a persistent epistemic memory layer.
 
 That changes agent behavior in the place that actually matters: when a model is close to hallucinating but still sounds fluent.
 
-## The Result That Triggered This
+## The Result
 
 ```text
 Model                               Score   Questions
@@ -62,16 +61,11 @@ llama3.1-8b  + Nouse memory  →      96%     60
 
 **An 8B model with Nouse outperforms a 70B model without it.**
 
-The effect is not about retrieval. It is about *epistemic grounding* — a small, precise knowledge signal
+The effect is not retrieval. It is *epistemic grounding* — a small, precise knowledge signal
 redirects the model's existing priors onto the correct frame, with confidence and evidence attached.
 We call this the **Intent Disambiguation Effect**.
 
-LLMs are stateless formal systems: they process symbol strings without epistemic commitment.
-They cannot distinguish what they know from what they hallucinate. Nouse is the missing layer:
-it gives any LLM a persistent, structured account of what is known, why, with what confidence,
-and — critically — what is *not* yet known.
-
-→ Full benchmark: [eval/RESULTS.md](eval/RESULTS.md)
+→ Full benchmark details: [eval/RESULTS.md](eval/RESULTS.md) · [Run it yourself](#run-the-benchmark-yourself)
 
 ---
 
@@ -87,7 +81,7 @@ and — critically — what is *not* yet known.
 
 ---
 
-## What Nouse is
+## What Nouse Is
 
 Nouse (νοῦς, Gk. *mind*) is a **persistent, self-growing epistemic substrate** that attaches to any LLM.
 
@@ -97,7 +91,7 @@ It is informed by brain-inspired plasticity, cognitive research, and the practic
 Your documents, conversations, research
            ↓
     Nouse knowledge graph
-    (KuzuDB + Hebbian learning + evidence scoring)
+    (SQLite WAL + NetworkX + Hebbian learning + evidence scoring)
            ↓
     brain.query("your question")
            ↓
@@ -120,15 +114,18 @@ There is no retraining. No gradient descent. The graph grows — and the gaps be
 
 ---
 
-## Why It Feels Different From RAG
+## How Nouse Differs From Alternatives
 
-| System | Main unit | Knows confidence | Knows what is missing | Learns structurally over time |
-| --- | --- | ---: | ---: | ---: |
-| Basic RAG | text chunk | No | No | No |
-| Vector memory | embedding | Partial | No | No |
-| NoUse | typed relation + evidence | Yes | Yes | Yes |
+| System | Main unit | Knows confidence | Knows what's missing | Learns over time | Local-first |
+| --- | --- | :---: | :---: | :---: | :---: |
+| **Basic RAG** | text chunk | ✗ | ✗ | ✗ | ✓ |
+| **Vector memory** | embedding | ~ | ✗ | ✗ | ✓ |
+| **Mem0** | memory objects | ~ | ✗ | ~ | ✓ |
+| **MemGPT / Letta** | conversation pages | ✗ | ✗ | ~ | ✗ |
+| **Claude Memory** | key-value | ✗ | ✗ | ✗ | ✗ |
+| **Nouse** | typed relation + evidence | **✓** | **✓** | **✓** | **✓** |
 
-NoUse is not trying to replace the model. It gives the model a brain-like memory substrate it can query before speaking.
+Nouse is not trying to replace the model. It gives the model a brain-like memory substrate it can query before speaking.
 
 ---
 
@@ -152,7 +149,7 @@ print(result.confidence)
 print(result.strong_axioms())
 ```
 
-If the daemon is already running, `attach()` talks to it over HTTP instead of opening KuzuDB directly. That means the same quickstart works whether the user is in local-only mode or daemon mode.
+If the daemon is running, `attach()` connects over HTTP. Otherwise it falls back to direct local graph access. The same code works either way.
 
 Works with any provider — OpenAI, Anthropic, Groq, Cerebras, Ollama:
 
@@ -240,17 +237,16 @@ The pattern is always the same: `brain.query(...)` first, provider call second.
 
 ---
 
-## Managed NoUse
+## Managed NoUse (Coming)
 
-NoUse is local-first today. A natural next step is a managed cloud brain:
+NoUse is local-first today. A managed cloud version is planned:
 
 ```python
 brain = nouse.attach(api_key="nouse_sk_...")
 ```
 
-That would give users a hosted NoUse brain with larger managed memory graphs, shared project memory across agents and teams, and less local setup.
-
-For individual users, it is a simpler paid upgrade. For researchers, it is persistent shared memory across runs and collaborators. For larger companies, it is a path to API access, team memory, and managed deployment.
+Hosted memory graphs, shared project memory across agents and teams, and zero local setup.
+Interested? [Get in touch](mailto:bjorn@base76research.com).
 
 ---
 
@@ -332,12 +328,15 @@ browser bookmarks — anything you configure. You never manually curate the grap
 nouse/
 ├── inject.py          # Public API: attach(), NouseBrain, Axiom, QueryResult
 ├── field/
-│   └── surface.py     # KuzuDB graph interface
+│   └── surface.py     # SQLite WAL + NetworkX graph interface
 ├── daemon/
 │   ├── main.py        # Autonomous learning loop
 │   ├── nightrun.py    # Nightly consolidation (9 phases)
 │   ├── node_deepdive.py  # 5-step concept extraction
 │   └── ghost_q.py     # LLM-driven graph enrichment
+├── limbic/            # Neuromodulation (relevance, arousal, novelty)
+├── memory/            # Episodic + procedural + semantic memory
+├── metacognition/     # Self-monitoring and confidence calibration
 └── search/
     └── escalator.py   # 3-level knowledge escalation
 ```
@@ -367,10 +366,10 @@ The paper argues that LLMs model the output channel of intelligence (language), 
 
 ---
 
-## Install & run daemon
+## Install & Run Daemon
 
 ```bash
-pip install -e ".[dev]"
+pip install nouse
 
 # Start the learning daemon
 nouse daemon start
@@ -382,19 +381,37 @@ nouse run
 nouse status
 ```
 
-Requires Python 3.11+. Graph stored in `~/.local/share/nouse/field.kuzu`.
+Requires Python 3.11+. Graph stored in `~/.local/share/nouse/`.
+
+---
+
+## Roadmap
+
+| Phase | Status | Description |
+| --- | :---: | --- |
+| **Core engine** | ✅ | SQLite WAL + NetworkX + Hebbian plasticity + TDA gap detection |
+| **Multi-provider** | ✅ | OpenAI, Anthropic, Ollama, Groq, Cerebras |
+| **MCP integration** | ✅ | Model Context Protocol server for Claude and compatible clients |
+| **Cross-domain benchmarks** | 🔄 | Validating on external datasets beyond internal domain |
+| **Docker support** | 📋 | One-command deployment for teams |
+| **Managed cloud** | 📋 | `nouse.attach(api_key="nouse_sk_...")` — hosted brain for teams |
+| **Multi-tenant API** | 📋 | Shared project memory, team collaboration, SLAs |
 
 ---
 
 ## License
 
-MIT — Björn Wikström / Base76 Research Lab
+MIT — see [LICENSE](LICENSE)
 
 ---
 
 ## Contact
 
+Björn Wikström / [Base76 Research Lab](https://github.com/base76-research-lab)
+
 - 𝕏 / Twitter: [@Q_for_qualia](https://x.com/Q_for_qualia)
 - LinkedIn: [bjornshomelab](https://www.linkedin.com/in/bjornshomelab/)
 - Email: [bjorn@base76research.com](mailto:bjorn@base76research.com)
-- Issues: [github.com/base76-research-lab/NoUse/issues](https://github.com/base76-research-lab/NoUse/issues)
+- Issues: [GitHub Issues](https://github.com/base76-research-lab/NoUse/issues)
+
+For security vulnerabilities, see [SECURITY.md](SECURITY.md).

@@ -8,6 +8,7 @@ build/
 *.kuzu
 *.kuzu.lock
 _bmad/
-IMG/Namnlös design.png
+IMG/design-mockup.png
+*.bak
 eval/results/run_20260402_*.json
 .env.pypi
