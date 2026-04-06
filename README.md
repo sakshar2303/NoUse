@@ -1,20 +1,26 @@
-# Nouse
+<p align="center">
+  <img src="IMG/nouse-header.png" alt="NoUse — Epistemic Knowledge Graph for LLMs" width="100%">
+</p>
 
-![Nouse](IMG/Nouse.png)
+<p align="center">
+  <strong>An 8B model with NoUse outperforms a 70B model without it.</strong>
+</p>
 
-**Epistemic grounding for LLMs — knows what it knows, how confidently, and where knowledge runs out.**
+<p align="center">
+  <a href="https://pypi.org/project/nouse/"><img src="https://img.shields.io/pypi/v/nouse" alt="PyPI"></a>
+  <a href="https://github.com/base76-research-lab/NoUse/actions/workflows/tests.yml"><img src="https://github.com/base76-research-lab/NoUse/actions/workflows/tests.yml/badge.svg" alt="Tests"></a>
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.11+-blue.svg" alt="Python 3.11+"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="eval/RESULTS.md"><img src="https://img.shields.io/badge/benchmark-96%25_vs_46%25-brightgreen" alt="Benchmark"></a>
+</p>
 
-An 8B model with Nouse outperforms a 70B model without it.
+<p align="center">
+  <a href="#quick-start">Quick Start</a> · <a href="#the-result">Benchmark</a> · <a href="#how-it-works">How It Works</a> · <a href="#how-nouse-differs-from-alternatives">vs Alternatives</a> · <a href="#use-with-openai-anthropic-or-ollama">Examples</a> · <a href="#research">Research</a> · <a href="#roadmap">Roadmap</a>
+</p>
 
-[![PyPI](https://img.shields.io/pypi/v/nouse)](https://pypi.org/project/nouse/)
-[![Tests](https://github.com/base76-research-lab/NoUse/actions/workflows/tests.yml/badge.svg)](https://github.com/base76-research-lab/NoUse/actions/workflows/tests.yml)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Benchmark](https://img.shields.io/badge/benchmark-96%25_vs_46%25-brightgreen)](eval/RESULTS.md)
-
-[Quick Start](#quick-start) · [Benchmark](#the-result) · [How It Works](#how-it-works) · [vs Alternatives](#how-nouse-differs-from-alternatives) · [Examples](#use-with-openai-anthropic-or-ollama) · [Research](#research) · [Roadmap](#roadmap)
-
-![Nouse demo](IMG/demo-en.gif)
+<p align="center">
+  <img src="IMG/nouse-graph-growth.gif" alt="NoUse knowledge graph growing — discovering concepts, substrates, gaps, and axioms" width="800">
+</p>
 
 ---
 
