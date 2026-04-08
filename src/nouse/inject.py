@@ -286,14 +286,11 @@ class NouseBrain:
         except Exception:
             return []
 
-<<<<<<< Updated upstream
     def learn(self, prompt: str, response: str, source: str = "conversation",
-              domain_hint: str = "") -> None:
-        """Extract and store knowledge from a prompt/response pair."""
-=======
-    def learn(self, prompt: str, response: str, source: str = "conversation", model: str = None, context_block: str = "", confidence_in: float = None, confidence_out: float = None, nodes_used: list = None, tokens_saved: int = 0) -> None:
+              domain_hint: str = "", model: str = None, context_block: str = "",
+              confidence_in: float = None, confidence_out: float = None,
+              nodes_used: list = None, tokens_saved: int = 0) -> None:
         """Extract and store knowledge from a prompt/response pair. Also logs to modelsessions."""
->>>>>>> Stashed changes
         import asyncio
         import logging
         from nouse.daemon.extractor import extract_relations
@@ -334,6 +331,24 @@ class NouseBrain:
                 loop.run_until_complete(_run())
         except Exception as e:
             logging.getLogger("nouse.brain.learn").debug("learn() runner failed: %s", e)
+
+        # Log session to modelsessions
+        try:
+            from nouse.memory import modelsessions
+            modelsessions.log_session(
+                model=model or "unknown",
+                query=prompt,
+                answer=response,
+                context_block=context_block,
+                confidence_in=confidence_in,
+                confidence_out=confidence_out,
+                nodes_used=nodes_used or [],
+                tokens_saved=tokens_saved,
+                extra={"source": source}
+            )
+        except Exception:
+            pass
+
 
     def domain_bootstrap(
         self,
@@ -430,23 +445,6 @@ class NouseBrain:
                 "domain_bootstrap runner failed: %s", e
             )
             return 0
-
-        # Log session to modelsessions
-        try:
-            from nouse.memory import modelsessions
-            modelsessions.log_session(
-                model=model or "unknown",
-                query=prompt,
-                answer=response,
-                context_block=context_block,
-                confidence_in=confidence_in,
-                confidence_out=confidence_out,
-                nodes_used=nodes_used or [],
-                tokens_saved=tokens_saved,
-                extra={"source": source}
-            )
-        except Exception:
-            pass
 
     def add(
         self,
