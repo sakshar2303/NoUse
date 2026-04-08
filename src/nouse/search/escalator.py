@@ -168,10 +168,9 @@ async def escalate_query(
 
     _log.info("Escalating '%s' (conf=%.2f < %.2f)", query[:60], conf, threshold)
 
-<<<<<<< Updated upstream
     # Nivå 2: LLM bootstrap — seed graph from model weights if domain is unknown
     llm_learned = False
-    if learn and not brain._read_only and not graph_result.has_knowledge:
+    if learn and not getattr(brain, "_read_only", False) and not graph_result.has_knowledge:
         n = brain.domain_bootstrap(query)
         llm_learned = n > 0
         if llm_learned:
@@ -187,35 +186,6 @@ async def escalate_query(
                 )
 
     # Nivå 3: web-sök
-=======
-    # Nivå 4: domän saknas helt → bootstrap från LLM-vikter → re-query
-    if not graph_result.has_knowledge and conf == 0.0 and learn and not getattr(brain, "_read_only", False):
-        _log.info("L4 bootstrap: ingen domäntäckning för '%s'", query[:60])
-        rels = await _bootstrap_domain(query)
-        if len(rels) >= BOOTSTRAP_MIN_RELATIONS:
-            for src, rel_type, tgt in rels:
-                try:
-                    brain.add(src, rel_type, tgt,
-                              why="l4_domain_bootstrap", evidence_score=0.4)
-                except Exception as e:
-                    _log.debug("L4 add_relation failed: %s", e)
-            _log.info("L4 bootstrap: %d relationer skrivna till graf", len(rels))
-            graph_result = brain.query(query)
-            conf = graph_result.confidence
-            if graph_result.has_knowledge:
-                bootstrap_block = graph_result.context_block()
-                bootstrap_block += "\n\n[domän bootstrappad från modellvikter — ej externt validerad]"
-                return EscalationResult(
-                    query=query,
-                    context_block=bootstrap_block,
-                    sources=[],
-                    escalated=True,
-                    confidence_before=0.0,
-                    learned=True,
-                )
-
-    # Nivå 2: web-sök
->>>>>>> Stashed changes
     snippets, sources = await _web_search(query, max_results=max_results)
     web_block = _format_web_block(snippets, sources)
 
