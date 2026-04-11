@@ -55,6 +55,12 @@ FAST_DELEGATE_ENABLED = str(os.getenv("NOUSE_CHAT_FAST_DELEGATE", "1")).strip().
 FAST_DELEGATE_MIN_WORDS = max(8, int(os.getenv("NOUSE_CHAT_FAST_DELEGATE_MIN_WORDS", "18")))
 INGEST_TIMEOUT_SEC = float(os.getenv("NOUSE_INGEST_TIMEOUT_SEC", "20"))
 CAPTURE_QUEUE_DIR = Path.home() / ".local" / "share" / "nouse" / "capture_queue"
+GRAPH_CENTER_STATE_PATH = Path(
+    os.getenv(
+        "NOUSE_GRAPH_CENTER_PATH",
+        str(Path.home() / ".local" / "share" / "nouse" / "graph_center.json"),
+    )
+).expanduser()
 QUEUE_DEFAULT_TASK_TIMEOUT_SEC = float(os.getenv("NOUSE_RESEARCH_QUEUE_TASK_TIMEOUT_SEC", "180"))
 QUEUE_DEFAULT_EXTRACT_TIMEOUT_SEC = float(os.getenv("NOUSE_RESEARCH_QUEUE_EXTRACT_TIMEOUT_SEC", "30"))
 from nouse.daemon.main import brain_loop
@@ -513,6 +519,102 @@ def _norm_text(value: Any) -> str:
     return re.sub(r"\s+", " ", unicodedata.normalize("NFKC", _coerce_text(value))).strip()
 
 
+def _graph_center_path() -> Path:
+    return GRAPH_CENTER_STATE_PATH
+
+
+def _load_graph_center_state() -> dict[str, Any]:
+    path = _graph_center_path()
+    if not path.exists():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    node = _norm_text(raw.get("node"))
+    if not node:
+        return {}
+    return {
+        "node": node,
+        "updated_at": _coerce_text(raw.get("updated_at")),
+        "source": _coerce_text(raw.get("source")) or "api",
+    }
+
+
+def _save_graph_center_state(node: str, *, source: str = "api") -> dict[str, Any]:
+    clean_node = _norm_text(node)
+    if not clean_node:
+        raise ValueError("node saknas")
+    payload = {
+        "node": clean_node,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "source": _coerce_text(source) or "api",
+    }
+    path = _graph_center_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return payload
+
+
+def _clear_graph_center_state() -> bool:
+    path = _graph_center_path()
+    if not path.exists():
+        return False
+    try:
+        path.unlink()
+        return True
+    except Exception:
+        return False
+
+
+def _resolve_node_id_in_rows(rows: list[dict[str, Any]], wanted: str) -> str:
+    clean = _norm_text(wanted)
+    if not clean:
+        return ""
+    for row in rows:
+        node_id = _coerce_text(row.get("id"))
+        if node_id == clean:
+            return node_id
+    wanted_cf = clean.casefold()
+    for row in rows:
+        node_id = _coerce_text(row.get("id"))
+        if node_id.casefold() == wanted_cf:
+            return node_id
+    return ""
+
+
+def _resolve_graph_center_node(field: FieldSurface, wanted: str) -> tuple[str, bool]:
+    clean = _norm_text(wanted)
+    if not clean:
+        return "", False
+
+    concept_domain = getattr(field, "concept_domain", None)
+    if callable(concept_domain):
+        try:
+            dom = concept_domain(clean)
+        except Exception:
+            dom = None
+        if dom:
+            return clean, True
+
+    try:
+        rows = field.concepts()
+    except Exception:
+        return clean, False
+
+    for row in rows:
+        name = _coerce_text((row or {}).get("name"))
+        if name == clean:
+            return name, True
+
+    clean_cf = clean.casefold()
+    for row in rows:
+        name = _coerce_text((row or {}).get("name"))
+        if name.casefold() == clean_cf:
+            return name, True
+    return clean, False
+
+
 def _edge_uid(src: str, rel_type: str, tgt: str, dup_index: int = 1) -> str:
     base = f"{src}::{rel_type}::{tgt}"
     return base if dup_index <= 1 else f"{base}::{dup_index}"
@@ -646,11 +748,21 @@ def _graph_payload(
 ) -> dict[str, Any]:
     field = get_field()
     nodes, edges = _graph_rows(limit_nodes=limit_nodes, limit_edges=limit_edges)
+    center_state = _load_graph_center_state()
+    center_node = _resolve_node_id_in_rows(nodes, center_state.get("node") or "")
+    configured_center = _norm_text(center_state.get("node"))
     return {
         "nodes": nodes,
         "edges": edges,
         "stats": field.stats(),
         "activity": _graph_activity(nodes, edges, activity_window=activity_window),
+        "center": {
+            "configured": bool(configured_center),
+            "node": center_node or (configured_center or None),
+            "in_view": bool(center_node),
+            "updated_at": _coerce_text(center_state.get("updated_at")),
+            "source": _coerce_text(center_state.get("source")) or "api",
+        },
     }
 
 
@@ -730,6 +842,169 @@ def _search_latest_journal(query: str, limit: int = 8) -> dict[str, Any]:
         "count": len(trimmed),
         "entries": trimmed,
     }
+
+
+def _insights_path() -> Path:
+    memory_dir = Path(
+        os.getenv(
+            "NOUSE_MEMORY_DIR",
+            str(Path.home() / ".local" / "share" / "nouse" / "memory"),
+        )
+    ).expanduser()
+    return memory_dir / "insights.jsonl"
+
+
+def _extract_links_from_insight_row(row: dict[str, Any]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    url_re = re.compile(r"https?://[^\s<>\"]+")
+
+    def _append_from_text(text: str) -> None:
+        for m in url_re.findall(str(text or "")):
+            url = m.rstrip(").,;]")
+            if not url or url in seen:
+                continue
+            seen.add(url)
+            out.append(url)
+
+    _append_from_text(str(row.get("statement") or ""))
+    _append_from_text(str(row.get("source") or ""))
+
+    for key in ("basis_evidence_refs", "evidence_refs"):
+        refs = row.get(key)
+        if not isinstance(refs, list):
+            continue
+        for item in refs:
+            txt = _coerce_text(item)
+            if not txt:
+                continue
+            _append_from_text(txt)
+            if txt.startswith(("url:", "web:", "source_url:", "source_doc:")):
+                _append_from_text(txt.split(":", 1)[-1])
+
+    return out[:8]
+
+
+def _insight_entry_payload(row: dict[str, Any]) -> dict[str, Any]:
+    basis = row.get("basis") if isinstance(row.get("basis"), dict) else {}
+    sample_rows = basis.get("sample_rows") if isinstance(basis.get("sample_rows"), list) else []
+    score_components = (
+        basis.get("score_components")
+        if isinstance(basis.get("score_components"), dict)
+        else {}
+    )
+    return {
+        "ts": _coerce_text(row.get("ts")),
+        "insight_id": _coerce_text(row.get("insight_id")),
+        "kind": _coerce_text(row.get("kind")),
+        "tier": _coerce_text(row.get("tier")),
+        "score": _coerce_float(row.get("score"), default=0.0),
+        "support": _coerce_int(row.get("support"), default=0, minimum=0, maximum=1_000_000),
+        "mean_evidence": _coerce_float(row.get("mean_evidence"), default=0.0),
+        "statement": _coerce_text(row.get("statement")),
+        "anchor": _coerce_text(row.get("anchor") or row.get("src")),
+        "source": _coerce_text(row.get("source")),
+        "links": _extract_links_from_insight_row(row),
+        "basis": {
+            "method": _coerce_text(basis.get("method")),
+            "support_rows": _coerce_int(
+                basis.get("support_rows"),
+                default=_coerce_int(row.get("support"), default=0, minimum=0, maximum=1_000_000),
+                minimum=0,
+                maximum=1_000_000,
+            ),
+            "score_components": {
+                "evidence": _coerce_float(score_components.get("evidence"), default=0.0),
+                "support": _coerce_float(score_components.get("support"), default=0.0),
+                "novelty": _coerce_float(score_components.get("novelty"), default=0.0),
+                "actionability": _coerce_float(score_components.get("actionability"), default=0.0),
+            },
+            "sample_rows": sample_rows[:3],
+        },
+    }
+
+
+def _latest_insights(limit: int = 12) -> dict[str, Any]:
+    safe_limit = _coerce_int(limit, default=12, minimum=1, maximum=200)
+    path = _insights_path()
+    if not path.exists():
+        return {"ok": True, "path": str(path), "count": 0, "entries": []}
+
+    lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    entries: list[dict[str, Any]] = []
+    for raw in reversed(lines):
+        row = _coerce_text(raw)
+        if not row:
+            continue
+        try:
+            parsed = json.loads(row)
+        except Exception:
+            continue
+        if not isinstance(parsed, dict):
+            continue
+        entries.append(_insight_entry_payload(parsed))
+        if len(entries) >= safe_limit:
+            break
+
+    return {"ok": True, "path": str(path), "count": len(entries), "entries": entries}
+
+
+class GraphCenterRequest(BaseModel):
+    node: str
+
+
+@app.get("/api/graph/cc")
+def get_graph_center():
+    state = _load_graph_center_state()
+    configured = bool(_norm_text(state.get("node")))
+    if not configured:
+        return {
+            "ok": True,
+            "configured": False,
+            "node": None,
+            "exists": False,
+            "updated_at": "",
+            "source": "",
+            "path": str(_graph_center_path()),
+        }
+
+    field = get_field()
+    resolved, exists = _resolve_graph_center_node(field, state.get("node") or "")
+    return {
+        "ok": True,
+        "configured": True,
+        "node": resolved,
+        "exists": bool(exists),
+        "updated_at": _coerce_text(state.get("updated_at")),
+        "source": _coerce_text(state.get("source")) or "api",
+        "path": str(_graph_center_path()),
+    }
+
+
+@app.post("/api/graph/cc")
+def set_graph_center(req: GraphCenterRequest):
+    wanted = _norm_text(req.node)
+    if not wanted:
+        return {"ok": False, "error": "node saknas"}
+    field = get_field()
+    resolved, exists = _resolve_graph_center_node(field, wanted)
+    if not exists:
+        return {"ok": False, "error": f"Node '{wanted}' hittades inte i grafen."}
+    payload = _save_graph_center_state(resolved, source="api")
+    return {
+        "ok": True,
+        "configured": True,
+        "node": resolved,
+        "exists": True,
+        "updated_at": _coerce_text(payload.get("updated_at")),
+        "source": _coerce_text(payload.get("source")) or "api",
+    }
+
+
+@app.delete("/api/graph/cc")
+def clear_graph_center():
+    removed = _clear_graph_center_state()
+    return {"ok": True, "cleared": bool(removed)}
 
 
 @app.get("/api/graph")
@@ -836,6 +1111,12 @@ def get_graph_focus(
         ),
         "journal": _search_latest_journal(resolved, limit=journal_limit),
     }
+
+
+@app.get("/api/insights/recent")
+def get_insights_recent(limit: int = 12):
+    """Senaste findings/claims med länkar + basis-data för visualisering."""
+    return _latest_insights(limit=limit)
 
 
 @app.get("/api/events")
